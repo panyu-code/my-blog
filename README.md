@@ -23,8 +23,6 @@
 - **JDK版本**: Java 17
 - **ORM框架**: MyBatis Plus 3.5.5
 - **数据库**: MySQL 8.x
-- **缓存**: Redis
-- **文档存储**: MongoDB
 - **对象存储**: AWS S3 (兼容 MinIO)
 - **工具类**: Lombok, Commons Lang3, Fastjson2
 
@@ -77,9 +75,7 @@ my-blog/
 - Node.js 16+
 - JDK 17+
 - MySQL 8.0+
-- Redis 5.0+
-- MongoDB 4.0+
-- MinIO / AWS S3
+- AWS S3
 
 ### 后端部署
 
@@ -101,12 +97,6 @@ spring:
     url: jdbc:mysql://localhost:3306/blog
     username: your_username
     password: your_password
-  data:
-    redis:
-      host: localhost
-      port: 6379
-    mongodb:
-      uri: mongodb://localhost:27017/blog
 ```
 
 4. 启动服务
