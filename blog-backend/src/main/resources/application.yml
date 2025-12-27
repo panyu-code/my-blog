@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: blog-backend
+  # 环境配置：local=本地开发, prod=生产环境
+  profiles:
+    active: prod
+  # Jackson日期格式化配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+
+# SpringDoc配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packages-to-scan: com.panyu.mybolg.controller
+  default-flat-param-object: false

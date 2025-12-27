@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  blog-backend:
+    build: .
+    container_name: blog-backend
+    restart: always
+    ports:
+      - "1717:1717"
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - blog-network
+
+networks:
+  blog-network:
+    driver: bridge
