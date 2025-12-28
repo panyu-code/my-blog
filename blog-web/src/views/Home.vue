@@ -1,9 +1,9 @@
 <template>
   <div class="home">
-    <!-- Banner 区域 -->
-    <div class="banner">
-      <h1>记录技术成长，分享编程心得</h1>
-    </div>
+<!--    &lt;!&ndash; Banner 区域 &ndash;&gt;-->
+<!--    <div class="banner">-->
+<!--      <h1>记录技术成长，分享编程心得</h1>-->
+<!--    </div>-->
 
     <!-- 分类和标签 -->
     <div class="category-tags-section">
@@ -318,7 +318,7 @@ onMounted(() => {
 .banner {
   background: linear-gradient(135deg, #5d9cec 0%, #4a8cc7 100%);
   color: white;
-  padding: 40px 20px;
+  padding: 20px 10px;
   text-align: center;
   border-radius: 8px;
   margin-bottom: 30px;

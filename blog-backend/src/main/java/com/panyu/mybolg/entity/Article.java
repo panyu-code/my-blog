@@ -31,6 +31,9 @@ public class Article {
     private String authorName;
 
     @TableField(exist = false)
+    private String authorAvatar;
+
+    @TableField(exist = false)
     private String categoryName;
 
     // Web端展示使用：包含名称和颜色的标签对象列表
@@ -42,6 +45,10 @@ public class Article {
     private List<String> tags;
 
     private Integer status;
+
+    private Integer auditStatus;
+
+    private String auditReason;
 
     private Integer isTop;
 

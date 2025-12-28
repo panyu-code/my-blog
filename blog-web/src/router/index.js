@@ -41,13 +41,31 @@ const routes = [
         path: '/about',
         name: 'About',
         component: () => import('../views/About.vue'),
-        meta: { title: '关于', requiresAuth: true }
+        meta: { title: '关于', requiresAuth: false }
       },
       {
         path: '/profile',
         name: 'Profile',
         component: () => import('../views/Profile.vue'),
         meta: { title: '个人中心', requiresAuth: true }
+      },
+      {
+        path: '/publish',
+        name: 'Publish',
+        component: () => import('../views/Publish.vue'),
+        meta: { title: '发布文章', requiresAuth: true }
+      },
+      {
+        path: '/publish/:id',
+        name: 'EditArticle',
+        component: () => import('../views/Publish.vue'),
+        meta: { title: '编辑文章', requiresAuth: true }
+      },
+      {
+        path: '/my-articles',
+        name: 'MyArticles',
+        component: () => import('../views/MyArticles.vue'),
+        meta: { title: '我的文章', requiresAuth: true }
       }
     ]
   },
@@ -62,6 +80,12 @@ const routes = [
     name: 'Register',
     component: () => import('../views/Register.vue'),
     meta: { title: '注册', requiresAuth: false }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('../views/ForgotPassword.vue'),
+    meta: { title: '找回密码', requiresAuth: false }
   },
   {
     path: '/:pathMatch(.*)*',
@@ -86,7 +110,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 我的博客` : '我的博客'
+  document.title = to.meta.title ? `${to.meta.title} - blog-web` : 'blog-web'
   
   // 检查是否需要登录
   if (to.meta.requiresAuth !== false) {

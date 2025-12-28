@@ -59,11 +59,7 @@
             <el-form-item label="昵称" prop="nickname">
               <el-input v-model="form.nickname" placeholder="请输入昵称" />
             </el-form-item>
-            
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" />
-            </el-form-item>
-            
+
             <el-form-item>
               <el-button type="primary" :loading="loading" @click="handleUpdate">
                 保存修改
@@ -138,8 +134,7 @@ const passwordFormRef = ref(null)
 
 const form = reactive({
   username: '',
-  nickname: '',
-  email: ''
+  nickname: ''
 })
 
 const passwordForm = reactive({
@@ -196,7 +191,6 @@ const handleUpdate = async () => {
     
     // 更新本地存储
     userStore.userInfo.nickname = form.nickname
-    userStore.userInfo.email = form.email
     localStorage.setItem('userInfo', JSON.stringify(userStore.userInfo))
     
     ElMessage.success('更新成功')
@@ -232,7 +226,6 @@ const handleUpdatePassword = async () => {
 onMounted(() => {
   form.username = userStore.userInfo?.username || ''
   form.nickname = userStore.userInfo?.nickname || ''
-  form.email = userStore.userInfo?.email || ''
 })
 </script>
 

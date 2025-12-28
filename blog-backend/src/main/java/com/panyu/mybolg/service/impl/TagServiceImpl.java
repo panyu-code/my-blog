@@ -88,6 +88,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(Article::getId, articleIds)
                .eq(Article::getStatus, 1)
+               .eq(Article::getAuditStatus, 1)
                .orderByDesc(Article::getCreateTime);
         Page<Article> articlePage = articleMapper.selectPage(page, wrapper);
         

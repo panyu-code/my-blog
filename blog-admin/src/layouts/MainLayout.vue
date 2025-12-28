@@ -1,7 +1,7 @@
 <template>
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
-      <div class="logo">
+      <div class="logo" @click="goHome">
         <span v-if="!isCollapse">博客后台</span>
         <span v-else>博</span>
       </div>
@@ -122,6 +122,10 @@ const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value
 }
 
+const goHome = () => {
+  router.push({name : 'Dashboard'})
+}
+
 const handleCommand = async (command) => {
   if (command === 'logout') {
     try {
@@ -164,6 +168,12 @@ const handleCommand = async (command) => {
   font-weight: bold;
   color: white;
   background-color: #2b3a4b;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logo:hover {
+  background-color: #1f2937;
 }
 
 .el-menu {

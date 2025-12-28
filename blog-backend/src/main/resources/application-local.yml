@@ -16,6 +16,38 @@ spring:
       minimum-idle: 5
       connection-test-query: SELECT 1
 
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: YuPan9527
+      database: 0
+      timeout: 2000
+      client-type: lettuce
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: your-qq-email@qq.com  # 你的QQ邮箱
+    password: your-qq-app-password  # QQ邮箱授权码
+    properties:
+      mail:
+        smtp:
+          auth: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+
 # MyBatis Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

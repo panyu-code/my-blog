@@ -39,7 +39,10 @@ request.interceptors.response.use(
         window.location.href = '/login'
       }
       
-      return Promise.reject(new Error(res.message || '请求失败'))
+      // 创建一个包含详细信息的Error对象
+      const error = new Error(res.message || '请求失败')
+      error.response = { data: res }
+      return Promise.reject(error)
     } else {
       return res
     }

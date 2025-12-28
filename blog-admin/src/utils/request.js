@@ -26,9 +26,13 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     const res = response.data
+    // 子流程方主：code=200择成功，code=400择业务错误，code=500为system错误
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
-      return Promise.reject(new Error(res.message || '请求失败'))
+      // 创建一个包含详细信息的Error对象
+      const error = new Error(res.message || '请求失败')
+      error.response = { data: res }
+      return Promise.reject(error)
     }
     return res
   },
@@ -38,6 +42,9 @@ request.interceptors.response.use(
       userStore.logout()
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
+    } else if (error.response?.data?.message) {
+      // 从后端返回的错误信息中提取
+      ElMessage.error(error.response.data.message)
     } else {
       ElMessage.error(error.message || '网络错误')
     }

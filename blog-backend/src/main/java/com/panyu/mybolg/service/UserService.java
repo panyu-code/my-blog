@@ -10,14 +10,19 @@ import java.util.Map;
 public interface UserService extends IService<User> {
     
     /**
-     * 用户登录
+     * 用户登录（账号密码）
      */
     Map<String, Object> login(String username, String password, HttpServletRequest request);
     
     /**
-     * 用户注册
+     * 用户登录（邮箱验证码）
      */
-    User register(User user);
+    Map<String, Object> loginByEmail(String email, String emailCaptcha, HttpServletRequest request);
+    
+    /**
+     * 用户注册（重载方法，有邮箱验证码）
+     */
+    User register(String username, String password, String email, String emailCaptcha);
     
     /**
      * 分页查询用户列表

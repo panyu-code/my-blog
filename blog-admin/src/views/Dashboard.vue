@@ -56,6 +56,20 @@
                 {{ row.authorName || '-' }}
               </template>
             </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'info'">
+                  {{ row.status === 1 ? '已发布' : '草稿' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="审核状态" width="120">
+              <template #default="{ row }">
+                <el-tag :type="getAuditStatusType(row.auditStatus)">
+                  {{ getAuditStatusText(row.auditStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="viewCount" label="浏览量" width="100" />
             <el-table-column label="发布时间" width="180">
               <template #default="{ row }">
@@ -136,6 +150,26 @@ const recentComments = ref([])
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
   return dateStr.replace('T', ' ').substring(0, 19)
+}
+
+// 审核状态类型
+const getAuditStatusType = (auditStatus) => {
+  switch (auditStatus) {
+    case 0: return 'warning' // 待审核
+    case 1: return 'success' // 已通过
+    case 2: return 'danger'  // 已拒绝
+    default: return 'info'
+  }
+}
+
+// 审核状态文本
+const getAuditStatusText = (auditStatus) => {
+  switch (auditStatus) {
+    case 0: return '待审核'
+    case 1: return '已通过'
+    case 2: return '已拒绝'
+    default: return '未知'
+  }
 }
 
 // 获取统计数据

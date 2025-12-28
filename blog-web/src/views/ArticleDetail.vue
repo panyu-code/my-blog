@@ -8,8 +8,8 @@
         <h1 class="article-title">{{ article.title }}</h1>
         
         <div class="article-meta">
-          <el-avatar :size="40">
-            {{ article.authorName?.charAt(0) || 'A' }}
+          <el-avatar :size="40" :src="article.authorAvatar">
+            <span v-if="!article.authorAvatar">{{ article.authorName?.charAt(0) || 'A' }}</span>
           </el-avatar>
           <div class="meta-info">
             <div class="author-name">{{ article.authorName || '匿名' }}</div>

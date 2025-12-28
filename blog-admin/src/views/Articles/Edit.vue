@@ -3,16 +3,17 @@
     <el-card>
       <template #header>
         <div class="header-wrapper">
-          <span class="header-title">{{ isEdit ? '编辑文章' : '新建文章' }}</span>
+          <span class="header-title">{{ isReadonly ? '查看文章' : (isEdit ? '编辑文章' : '新建文章') }}</span>
           <div>
             <el-button @click="handleBack">返回</el-button>
-            <el-button type="primary" @click="handleSave(0)">保存草稿</el-button>
-            <el-button type="success" @click="handleSave(1)">发布文章</el-button>
+            <template v-if="!isReadonly">
+              <el-button type="primary" @click="handleSave">保存</el-button>
+            </template>
           </div>
         </div>
       </template>
 
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px" :disabled="isReadonly">
         <el-form-item label="文章标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入文章标题" maxlength="100" show-word-limit />
         </el-form-item>
@@ -46,7 +47,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="封面图片">
+        <el-form-item label="封面图片" prop="cover">
           <div class="cover-upload-wrapper">
             <div v-if="form.cover" class="cover-preview">
               <img :src="form.cover" class="cover-image" />
@@ -74,7 +75,7 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="文章摘要">
+        <el-form-item label="文章摘要" prop="summary">
           <el-input
             v-model="form.summary"
             type="textarea"
@@ -111,6 +112,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount, shallowRef, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
 import { getCategoryList, getTagList, getArticleDetail, createArticle, updateArticle } from '../../api/article'
@@ -124,6 +126,7 @@ const formRef = ref(null)
 const editorRef = shallowRef()
 
 const isEdit = ref(false)
+const isReadonly = computed(() => route.query.readonly === 'true')
 const categories = ref([])
 const allTags = ref([])
 
@@ -157,6 +160,15 @@ const rules = {
   ],
   categoryId: [
     { required: true, message: '请选择文章分类', trigger: 'change' }
+  ],
+  tags: [
+    { required: true, message: '请选择文章标签', trigger: 'change' }
+  ],
+  cover: [
+    { required: true, message: '请上传封面图片', trigger: 'change' }
+  ],
+  summary: [
+    { required: true, message: '请输入文章摘要', trigger: 'blur' }
   ],
   content: [
     { required: true, message: '请输入文章内容', trigger: 'blur' }
@@ -208,7 +220,7 @@ const handleCreated = (editor) => {
   editorRef.value = editor
 }
 
-const handleSave = async (status) => {
+const handleSave = async () => {
   try {
     await formRef.value.validate()
     
@@ -235,17 +247,18 @@ const handleSave = async (status) => {
       summary: form.summary,
       content: form.content,
       authorId: userStore.userInfo.id,  // 添加作者ID
-      status
+      status: 1,  // 总是设置为已发布状态
+      auditStatus: 0  // 设置为待审核状态
     }
     
     console.log('提交的数据:', data)
     
     if (isEdit.value) {
       await updateArticle({ ...data, id: route.params.id })
-      ElMessage.success(status === 1 ? '发布成功' : '保存成功')
+      ElMessage.success('保存成功')
     } else {
       await createArticle(data)
-      ElMessage.success(status === 1 ? '发布成功' : '保存成功')
+      ElMessage.success('保存成功')
     }
     router.push('/articles')
   } catch (error) {
@@ -265,7 +278,7 @@ const fetchArticleDetail = async (id) => {
     console.log('文章详情返回数据:', data)
     console.log('标签数据:', data.tags)
     
-    // 将标签名称转换为ID
+    // 将标签转换为ID
     let tagIds = []
     if (data.tags && data.tags.length > 0) {
       // 如果是数字或数字字符串，直接转换
@@ -274,10 +287,16 @@ const fetchArticleDetail = async (id) => {
       } else {
         // 如果是标签名称，根据名称查找ID
         tagIds = data.tags.map(tagName => {
-          const tag = tags.value.find(t => t.name === tagName)
+          const tag = allTags.value.find(t => t.name === tagName)
           return tag ? tag.id : null
         }).filter(id => id !== null)
       }
+    } else if (data.tagList && data.tagList.length > 0) {
+      // 如果没有tags字段，尝试使用tagList字段
+      tagIds = data.tagList.map(tag => {
+        const foundTag = allTags.value.find(t => t.name === tag.name)
+        return foundTag ? foundTag.id : null
+      }).filter(id => id !== null)
     }
     console.log('转换后的标签IDs:', tagIds)
     
@@ -321,7 +340,12 @@ onMounted(async () => {
   
   if (route.params.id) {
     isEdit.value = true
-    await fetchArticleDetail(route.params.id)
+    try {
+      await fetchArticleDetail(route.params.id)
+    } catch (error) {
+      ElMessage.error('加载文章详情失败')
+      console.error('加载文章详情失败:', error)
+    }
   }
 })
 
@@ -429,7 +453,8 @@ onBeforeUnmount(() => {
 }
 
 .editor-content {
-  height: 500px;
+  height: 600px !important;
   overflow-y: auto;
 }
+
 </style>

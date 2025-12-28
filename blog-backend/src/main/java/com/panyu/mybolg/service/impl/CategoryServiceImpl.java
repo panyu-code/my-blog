@@ -30,11 +30,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public List<Category> listWithArticleCount() {
         List<Category> categories = list();
         
-        // 为每个分类统计已发布的文章数量
+        // 为每个分类统计已发布且已审核的文章数量
         for (Category category : categories) {
             LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(Article::getCategoryId, category.getId())
-                   .eq(Article::getStatus, 1); // 只统计已发布的文章
+                   .eq(Article::getStatus, 1)  // 只统计已发布的文章
+                   .eq(Article::getAuditStatus, 1); // 只统计已审核通过的文章
             long count = articleMapper.selectCount(wrapper);
             category.setCount((int) count);
         }
@@ -49,6 +50,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Article::getCategoryId, categoryId)
                .eq(Article::getStatus, 1)
+               .eq(Article::getAuditStatus, 1)
                .orderByDesc(Article::getCreateTime);
         Page<Article> articlePage = articleMapper.selectPage(page, wrapper);
         

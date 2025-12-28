@@ -15,6 +15,16 @@ public interface ArticleService extends IService<Article> {
     Page<Article> listWithDetails(Integer pageNum, Integer pageSize, String title, Long categoryId, Integer status);
 
     /**
+     * 管理端分页查询文章列表（包含所有审核状态的文章），并填充作者、分类、标签信息
+     */
+    Page<Article> listWithDetailsForAdmin(Integer pageNum, Integer pageSize, String title, Long categoryId, Integer status);
+
+    /**
+     * 用户端分页查询自己的文章列表，并填充作者、分类、标签信息
+     */
+    Page<Article> listUserArticles(Long authorId, Integer pageNum, Integer pageSize, String title, Integer status);
+
+    /**
      * 根据ID获取文章详情，并填充作者、分类、标签信息
      */
     Article getDetailById(Long id);
@@ -53,4 +63,14 @@ public interface ArticleService extends IService<Article> {
      * 填充文章列表的详细信息（作者、分类、标签）
      */
     void fillArticleDetails(List<Article> articles);
+
+    /**
+     * 发送邮件通知作者审核结果
+     */
+    void notifyAuthorAuditResult(Article article);
+
+    /**
+     * 发送邮件通知admin有新文章待审核
+     */
+    void notifyAdminNewArticle(Article article);
 }

@@ -35,8 +35,11 @@ public class DashboardServiceImpl implements DashboardService {
     public Map<String, Object> getStats() {
         Map<String, Object> stats = new HashMap<>();
         
-        // 统计文章数
-        long articleCount = articleService.count();
+        // 统计已审核通过的文章数
+        LambdaQueryWrapper<Article> articleWrapper = new LambdaQueryWrapper<>();
+        articleWrapper.eq(Article::getStatus, 1)  // 已发布的文章
+                     .eq(Article::getAuditStatus, 1); // 已审核通过的文章
+        long articleCount = articleService.count(articleWrapper);
         stats.put("articleCount", articleCount);
         
         // 统计用户数
@@ -51,8 +54,8 @@ public class DashboardServiceImpl implements DashboardService {
         long categoryCount = categoryService.count();
         stats.put("categoryCount", categoryCount);
         
-        // 统计浏览量
-        List<Article> articles = articleService.list();
+        // 统计已审核通过文章的浏览量
+        List<Article> articles = articleService.list(articleWrapper);
         int totalViews = articles.stream().mapToInt(Article::getViewCount).sum();
         stats.put("totalViews", totalViews);
         
@@ -62,7 +65,9 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<Article> getRecentArticles() {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByDesc(Article::getCreateTime).last("LIMIT 10");
+        wrapper.eq(Article::getStatus, 1)      // 已发布的文章
+               .eq(Article::getAuditStatus, 1) // 已审核通过的文章
+               .orderByDesc(Article::getCreateTime).last("LIMIT 10");
         List<Article> articles = articleService.list(wrapper);
         
         // 填充详细信息
@@ -96,13 +101,15 @@ public class DashboardServiceImpl implements DashboardService {
             LocalDate date = LocalDate.now().minusDays(i);
             dates.add(date.format(formatter));
             
-            // 查询该天的文章浏览量总和
+            // 查询该天的已审核通过文章浏览量总和
             LocalDateTime startOfDay = date.atStartOfDay();
             LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
             
             LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
             wrapper.ge(Article::getCreateTime, startOfDay)
-                   .lt(Article::getCreateTime, endOfDay);
+                   .lt(Article::getCreateTime, endOfDay)
+                   .eq(Article::getStatus, 1)      // 已发布的文章
+                   .eq(Article::getAuditStatus, 1); // 已审核通过的文章
             
             List<Article> articles = articleService.list(wrapper);
             int totalViews = articles.stream().mapToInt(Article::getViewCount).sum();
@@ -122,9 +129,11 @@ public class DashboardServiceImpl implements DashboardService {
         List<Category> categories = categoryService.list();
         
         for (Category category : categories) {
-            // 统计每个分类的文章数
+            // 统计每个分类的已审核通过的文章数
             LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(Article::getCategoryId, category.getId());
+            wrapper.eq(Article::getCategoryId, category.getId())
+                   .eq(Article::getStatus, 1)      // 已发布的文章
+                   .eq(Article::getAuditStatus, 1); // 已审核通过的文章
             long count = articleService.count(wrapper);
             
             if (count > 0) {

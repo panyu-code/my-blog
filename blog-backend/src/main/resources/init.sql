@@ -73,6 +73,8 @@ CREATE TABLE `article`
     `category_id`   BIGINT       NOT NULL DEFAULT 0 COMMENT '分类ID',
     `author_id`     BIGINT       NOT NULL DEFAULT 0 COMMENT '作者ID',
     `status`        TINYINT      NOT NULL DEFAULT 0 COMMENT '状态：0-草稿 1-已发布',
+    `audit_status`  TINYINT      NOT NULL DEFAULT 0 COMMENT '审核状态：0-待审核 1-已审核 2-审核不通过',
+    `audit_reason`  VARCHAR(500) NOT NULL DEFAULT '' COMMENT '审核拒绝理由',
     `is_top`        TINYINT      NOT NULL DEFAULT 0 COMMENT '是否置顶：0-否 1-是',
     `view_count`    INT          NOT NULL DEFAULT 0 COMMENT '浏览量',
     `like_count`    INT          NOT NULL DEFAULT 0 COMMENT '点赞数',
@@ -85,6 +87,7 @@ CREATE TABLE `article`
     KEY             `idx_category_id` (`category_id`),
     KEY             `idx_author_id` (`author_id`),
     KEY             `idx_status` (`status`),
+    KEY             `idx_audit_status` (`audit_status`),
     KEY             `idx_create_time` (`create_time`),
     KEY             `idx_publish_time` (`publish_time`),
     FULLTEXT KEY `ft_title_content` (`title`, `content`)
@@ -164,7 +167,7 @@ CREATE TABLE `settings`
 -- 插入默认管理员账号（密码：admin123，使用MD5加密后的值）
 -- 注意：密码需要在应用层使用 MD5(密码+用户ID) 加密
 INSERT INTO `user` (`username`, `password`, `nickname`, `email`, `role`, `status`)
-VALUES ('admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 'admin@example.com', 'admin', 1);
+VALUES ('admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 'admin@example.com', 1, 1);
 
 -- 插入默认分类
 INSERT INTO `category` (`name`, `description`, `sort`)

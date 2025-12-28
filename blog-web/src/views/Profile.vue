@@ -11,9 +11,31 @@
       <div class="profile-content">
         <!-- 头像区域 -->
         <div class="avatar-section">
-          <el-avatar :size="120" :src="userStore.userInfo?.avatar">
-            {{ userStore.userInfo?.username?.charAt(0) }}
-          </el-avatar>
+          <div class="avatar-wrapper">
+            <el-avatar :size="120" :src="userStore.userInfo?.avatar">
+              {{ userStore.userInfo?.username?.charAt(0) }}
+            </el-avatar>
+            <div class="avatar-overlay">
+              <el-upload
+                :action="uploadUrl"
+                :headers="uploadHeaders"
+                :data="uploadData"
+                :show-file-list="false"
+                :before-upload="beforeUpload"
+                :on-success="handleAvatarSuccess"
+                :on-error="handleUploadError"
+                :auto-upload="true"
+                accept="image/*"
+              >
+                <template #default>
+                  <div class="upload-trigger">
+                    <el-icon :size="20"><Camera /></el-icon>
+                    <span>更换头像</span>
+                  </div>
+                </template>
+              </el-upload>
+            </div>
+          </div>
           <div class="user-meta">
             <h2>{{ userStore.userInfo?.username }}</h2>
             <p class="email">{{ userStore.userInfo?.email }}</p>
@@ -84,7 +106,7 @@
           <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="editForm.email" placeholder="请输入邮箱" />
+          <el-input v-model="editForm.email"  disabled placeholder="请输入邮箱" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -143,10 +165,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { User, Edit, Lock } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { User, Edit, Lock, Camera } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
+import { updateUserInfo } from '../api/user'
+import { changePassword } from '../api/user'
 import dayjs from 'dayjs'
 
 const userStore = useUserStore()
@@ -155,6 +179,15 @@ const showEditDialog = ref(false)
 const showPasswordDialog = ref(false)
 const editFormRef = ref(null)
 const passwordFormRef = ref(null)
+
+// 头像上传配置
+const uploadUrl = '/api/upload/image'
+const uploadHeaders = computed(() => ({
+  'Authorization': `Bearer ${userStore.token || ''}`
+}))
+const uploadData = reactive({
+  bizDir: 'avatar'
+})
 
 const editForm = reactive({
   nickname: '',
@@ -200,6 +233,52 @@ const passwordRules = {
   ]
 }
 
+const beforeUpload = (file) => {
+  // 检查文件类型
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  
+  // 检查文件大小（限制为5MB）
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过5MB')
+    return false
+  }
+  
+  return true
+}
+
+const handleAvatarSuccess = async (response) => {
+  if (response.code === 200) {
+    const imageUrl = response.data.url
+    
+    // 更新用户头像
+    try {
+      await updateUserInfo({
+        avatar: imageUrl
+      })
+      
+      // 更新本地存储
+      userStore.userInfo.avatar = imageUrl
+      localStorage.setItem('userInfo', JSON.stringify(userStore.userInfo))
+      
+      ElMessage.success('头像更新成功')
+    } catch (error) {
+      console.error('更新头像失败:', error)
+      ElMessage.error('更新头像失败')
+    }
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+const handleUploadError = () => {
+  ElMessage.error('上传失败，请重试')
+}
+
 const formatDate = (date) => {
   if (!date) return '未知'
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
@@ -210,8 +289,8 @@ const handleUpdateProfile = async () => {
     await editFormRef.value.validate()
     loading.value = true
     
-    // TODO: 调用更新用户信息接口
-    // await updateUserInfo(editForm)
+    // 调用更新用户信息接口
+    await updateUserInfo(editForm)
     
     // 更新本地存储
     userStore.userInfo.nickname = editForm.nickname
@@ -232,18 +311,34 @@ const handleUpdatePassword = async () => {
     await passwordFormRef.value.validate()
     loading.value = true
     
-    // TODO: 调用修改密码接口
-    // await updatePassword(passwordForm)
+    // 核寸两次密码是否相等
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      ElMessage.error('两次密码不一致')
+      return
+    }
+    
+    // 调用修改密码接口
+    await changePassword({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    })
     
     ElMessage.success('密码修改成功，请重新登录')
-    showPasswordDialog.value = false
     
     // 清空表单
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
+    showPasswordDialog.value = false
+    
+    // 需要重新登录
+    setTimeout(() => {
+      userStore.logout()
+      window.location.href = '/login'
+    }, 1000)
   } catch (error) {
     console.error('修改密码失败:', error)
+    ElMessage.error(error.message || '修改密码失败')
   } finally {
     loading.value = false
   }
@@ -275,6 +370,52 @@ onMounted(() => {
 
 .profile-content {
   padding: 20px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: fit-content;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.upload-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: white;
+  font-size: 12px;
+}
+
+.avatar-overlay :deep(.el-upload) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-overlay :deep(.el-upload__input) {
+  display: none;
 }
 
 .avatar-section {

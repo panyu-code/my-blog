@@ -9,6 +9,24 @@ export const login = (data) => {
   })
 }
 
+// 管理员登录
+export const adminLogin = (data) => {
+  return request({
+    url: '/user/admin-login',
+    method: 'post',
+    data
+  })
+}
+
+// 发送邮箱验证码
+export const sendEmailCaptcha = (email) => {
+  return request({
+    url: '/captcha/send',
+    method: 'post',
+    data: { email }
+  })
+}
+
 // 获取用户列表
 export const getUserList = (params) => {
   return request({

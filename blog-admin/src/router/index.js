@@ -29,10 +29,10 @@ const routes = [
         meta: { title: '文章管理', icon: 'Document' }
       },
       {
-        path: '/articles/create',
-        name: 'ArticleCreate',
-        component: () => import('../views/Articles/Edit.vue'),
-        meta: { title: '新建文章', hidden: true }
+        path: '/articles/audit',
+        name: 'ArticleAudit',
+        component: () => import('../views/Articles/Audit.vue'),
+        meta: { title: '文章审核', icon: 'Check' }
       },
       {
         path: '/articles/edit/:id',
@@ -96,6 +96,9 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = userStore.token
   const userInfo = userStore.userInfo
+
+  // 设置页面标题
+  document.title = to.meta.title ? `${to.meta.title} - blog-admin` : 'blog-admin'
 
   if (to.meta.requiresAuth && !token) {
     next('/login')

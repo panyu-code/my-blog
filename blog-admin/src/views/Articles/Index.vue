@@ -13,10 +13,6 @@
               <el-icon><Delete /></el-icon>
               批量删除 ({{ selectedIds.length }})
             </el-button>
-            <el-button type="primary" @click="handleCreate">
-              <el-icon><Plus /></el-icon>
-              新建文章
-            </el-button>
           </div>
         </div>
       </template>
@@ -55,7 +51,11 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="标题" min-width="200" />
+        <el-table-column label="标题" min-width="200">
+          <template #default="{ row }">
+            <span class="article-title" @click="handleView(row)" style="cursor: pointer; color: #409eff; text-decoration: underline;">{{ row.title }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="作者" width="120">
           <template #default="{ row }">
             {{ row.authorName || '-' }}
@@ -68,8 +68,13 @@
         </el-table-column>
         <el-table-column label="标签" width="200">
           <template #default="{ row }">
-            <el-tag v-if="row.tags && row.tags.length > 0" v-for="tag in row.tags" :key="tag" size="small" style="margin-right: 5px;">
-              {{ tag }}
+            <el-tag 
+              v-if="(row.tags && row.tags.length > 0) || (row.tagList && row.tagList.length > 0)" 
+              v-for="tag in row.tagList ? row.tagList : (row.tags ? row.tags : [])" 
+              :key="tag.id || tag" 
+              size="small" 
+              style="margin-right: 5px;">
+              {{ tag.name || tag }}
             </el-tag>
             <span v-else style="color: #909399;">无</span>
           </template>
@@ -82,14 +87,20 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="审核状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getAuditStatusType(row.auditStatus)">
+              {{ getAuditStatusText(row.auditStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="发布时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="handleEdit(row)">编辑</el-button>
             <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -115,7 +126,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
-import { getArticleList, deleteArticle, getCategoryList } from '../../api/article'
+import { deleteArticle, getCategoryList } from '../../api/article'
+import request from '../../utils/request'
 
 const router = useRouter()
 const loading = ref(false)
@@ -142,6 +154,24 @@ const formatDate = (dateStr) => {
   return dateStr.replace('T', ' ').substring(0, 19)
 }
 
+const getAuditStatusType = (auditStatus) => {
+  switch (auditStatus) {
+    case 0: return 'warning' // 待审核
+    case 1: return 'success' // 已通过
+    case 2: return 'danger'  // 已拒绝
+    default: return 'info'
+  }
+}
+
+const getAuditStatusText = (auditStatus) => {
+  switch (auditStatus) {
+    case 0: return '待审核'
+    case 1: return '已通过'
+    case 2: return '已拒绝'
+    default: return '未知'
+  }
+}
+
 const fetchCategories = async () => {
   try {
     const res = await getCategoryList()
@@ -159,10 +189,14 @@ const fetchCategories = async () => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await getArticleList({
-      pageNum: pagination.page,
-      pageSize: pagination.pageSize,
-      ...searchForm
+    const res = await request({
+      url: '/article/admin/list',
+      method: 'get',
+      params: {
+        pageNum: pagination.page,
+        pageSize: pagination.pageSize,
+        ...searchForm
+      }
     })
     tableData.value = res.data.list || []
     pagination.total = res.data.total || 0
@@ -186,12 +220,12 @@ const handleReset = () => {
   handleSearch()
 }
 
-const handleCreate = () => {
-  router.push('/articles/create')
-}
-
 const handleEdit = (row) => {
   router.push(`/articles/edit/${row.id}`)
+}
+
+const handleView = (row) => {
+  router.push(`/articles/edit/${row.id}?readonly=true`)
 }
 
 const handleDelete = async (row) => {

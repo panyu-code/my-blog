@@ -10,7 +10,9 @@ import com.panyu.mybolg.utils.RustFsUtil;
 import com.panyu.mybolg.vo.TagVO;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Resource
     private RustFsUtil rustFsUtil;
 
+    @Resource
+    private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String emailFrom;
+
     @Override
     public Page<Article> listWithDetails(Integer pageNum, Integer pageSize, String title, Long categoryId, Integer status) {
         Page<Article> page = new Page<>(pageNum, pageSize);
@@ -56,8 +64,62 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         if (status != null) {
             wrapper.eq(Article::getStatus, status);
+        } else {
+            // web端默认只查看已发布的文章，不包括草稿
+            wrapper.eq(Article::getStatus, 1);
         }
+        // web端只查看已审核的文章
+        wrapper.eq(Article::getAuditStatus, 1);
 
+        wrapper.orderByDesc(Article::getIsTop, Article::getCreateTime);
+        Page<Article> result = page(page, wrapper);
+
+        // 填充详细信息
+        fillArticleDetails(result.getRecords());
+
+        return result;
+    }
+
+    @Override
+    public Page<Article> listWithDetailsForAdmin(Integer pageNum, Integer pageSize, String title, Long categoryId, Integer status) {
+        Page<Article> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+
+        if (title != null && !title.trim().isEmpty()) {
+            wrapper.like(Article::getTitle, title);
+        }
+        if (categoryId != null) {
+            wrapper.eq(Article::getCategoryId, categoryId);
+        }
+        if (status != null) {
+            wrapper.eq(Article::getStatus, status);
+        }
+        // 管理端查看所有审核状态的文章（除了已删除的）
+        // 不过滤审核状态，显示所有状态的文章
+        wrapper.orderByDesc(Article::getIsTop, Article::getCreateTime);
+        Page<Article> result = page(page, wrapper);
+
+        // 填充详细信息
+        fillArticleDetails(result.getRecords());
+
+        return result;
+    }
+
+    @Override
+    public Page<Article> listUserArticles(Long authorId, Integer pageNum, Integer pageSize, String title, Integer status) {
+        Page<Article> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+
+        // 只查询指定作者的文章
+        wrapper.eq(Article::getAuthorId, authorId);
+        
+        if (title != null && !title.trim().isEmpty()) {
+            wrapper.like(Article::getTitle, title);
+        }
+        if (status != null) {
+            wrapper.eq(Article::getStatus, status);
+        }
+        // 不过滤审核状态，显示所有状态的文章
         wrapper.orderByDesc(Article::getIsTop, Article::getCreateTime);
         Page<Article> result = page(page, wrapper);
 
@@ -87,10 +149,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         Page<Article> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
 
-        wrapper.like(StringUtils.isNotBlank(keyword), Article::getTitle, keyword)
-                .or()
-                .like(StringUtils.isNotBlank(keyword), Article::getContent, keyword);
-        wrapper.eq(Article::getStatus, 1);
+        wrapper.eq(Article::getStatus, 1)  // 只搜索已发布的文章
+               .eq(Article::getAuditStatus, 1)  // 只搜索已审核的文章
+               .and(StringUtils.isNotBlank(keyword), w -> w.like(Article::getTitle, keyword)
+                   .or()
+                   .like(Article::getContent, keyword));
 
         Page<Article> result = page(page, wrapper);
 
@@ -103,6 +166,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveWithTags(Article article, List<String> tags) {
+        // 设置默认审核状态为待审核
+        if (article.getAuditStatus() == null) {
+            article.setAuditStatus(0); // 待审核
+        }
+
         // 保存文章
         boolean saved = save(article);
         if (!saved) {
@@ -112,12 +180,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 保存标签关联
         saveTags(article.getId(), tags);
 
+        // 发送邮件通知管理员（只在新发布且待审核时发送通知）
+        if (article.getStatus() == 1 && article.getAuditStatus() == 0) {
+            notifyAdminNewArticle(article);
+        }
+
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateWithTags(Article article, List<String> tags) {
+        // 保存更新前的文章信息用于对比
+        Article oldArticle = getById(article.getId());
+
+        // 如果文章状态是草稿，则审核状态应设为已审核（因为草稿不需要审核）
+        if (article.getStatus() != null && article.getStatus() == 0) {
+            article.setAuditStatus(1); // 直接设置为已审核
+        }
+
         // 更新文章
         boolean updated = updateById(article);
         if (!updated) {
@@ -126,6 +207,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 更新标签关联
         saveTags(article.getId(), tags);
+
+        // 如果是新发布的文章（从草稿状态变为发布状态）且待审核，发送通知
+        if (oldArticle != null &&
+                oldArticle.getStatus() == 0 &&
+                article.getStatus() == 1 &&
+                article.getAuditStatus() == 0) {
+            notifyAdminNewArticle(article);
+        }
+        
+        // 如果文章从发布状态变为草稿状态，发送通知（可选）
+        if (oldArticle != null &&
+                oldArticle.getStatus() == 1 &&
+                article.getStatus() == 0) {
+            // 可以添加相应的处理逻辑
+        }
 
         return true;
     }
@@ -194,7 +290,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     /**
-     * 填充文章作者名字
+     * 填充文章作者名字和头像
      */
     private void fillAuthorName(List<Article> articles) {
         // 收集所有作者ID
@@ -210,13 +306,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 批量查询用户
         List<User> users = userService.listByIds(authorIds);
-        Map<Long, String> userMap = users.stream()
+        Map<Long, String> nameMap = users.stream()
                 .collect(Collectors.toMap(User::getId, User::getUsername));
+        Map<Long, String> avatarMap = users.stream()
+                .collect(Collectors.toMap(User::getId, User::getAvatar));
 
-        // 填充作者名字
+        // 填充作者名字和头像
         articles.forEach(article -> {
             if (article.getAuthorId() != null) {
-                article.setAuthorName(userMap.get(article.getAuthorId()));
+                article.setAuthorName(nameMap.get(article.getAuthorId()));
+                article.setAuthorAvatar(avatarMap.get(article.getAuthorId()));
             }
         });
     }
@@ -363,7 +462,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 // 删除upload表记录
                 uploadService.removeById(upload.getId());
             } else {
-                // 如果upload表中没有记录，尝试直接从URL提取key删除
+                // 如果上upload表中没有记录，尝试直接从上URL提取key删除
                 if (coverUrl.contains("/blog/")) {
                     String key = coverUrl.substring(coverUrl.indexOf("/blog/"));
                     rustFsUtil.delete(key);
@@ -371,6 +470,82 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             }
         } catch (Exception e) {
             // 封面删除失败不影响整体流程
+        }
+    }
+
+    @Override
+    public void notifyAuthorAuditResult(Article article) {
+        try {
+            User author = userService.getById(article.getAuthorId());
+            if (author == null || author.getEmail() == null || author.getEmail().isEmpty()) {
+                return;
+            }
+
+            String subject = "文章审核结果通知";
+            String text;
+            if (article.getAuditStatus() == 1) {
+                text = String.format("您好 %s,\n\n" +
+                                "您发布的文章《%s》已通过审核，现在已显示在博客中。\n\n" +
+                                "感谢您的投稿！\n\n" +
+                                "此为系统自动发送，请勿回复。",
+                        author.getNickname(), article.getTitle());
+            } else {
+                text = String.format("您好 %s,\n\n" +
+                                "很遗憾，您发布的文章《%s》未通过审核。\n\n" +
+                                "拒绝理由：%s\n\n" +
+                                "请修改后重新提交。\n\n" +
+                                "此为系统自动发送，请勿回复。",
+                        author.getNickname(), article.getTitle(),
+                        article.getAuditReason() != null && !article.getAuditReason().isEmpty() ?
+                                article.getAuditReason() : "内容不符合要求");
+            }
+
+            sendEmail(author.getEmail(), subject, text);
+        } catch (Exception e) {
+            System.err.println("发送审核结果邮件失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void notifyAdminNewArticle(Article article) {
+        try {
+            // 获取admin账号
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getUsername, "admin");
+            User admin = userService.getOne(wrapper);
+            if (admin == null || admin.getEmail() == null || admin.getEmail().isEmpty()) {
+                return;
+            }
+
+            User author = userService.getById(article.getAuthorId());
+            String authorName = author != null ? author.getNickname() : "未知用户";
+
+            String subject = "有新的文章待审核";
+            String text = String.format("您好,\n\n" +
+                            "有新的文章需要审核：\n\n" +
+                            "标题：%s\n" +
+                            "作者：%s\n" +
+                            "摘要：%s\n\n" +
+                            "请及时登录后台进行审核。\n\n" +
+                            "此为系统自动发送，请勿回复。",
+                    article.getTitle(), authorName, article.getSummary());
+
+            sendEmail(admin.getEmail(), subject, text);
+        } catch (Exception e) {
+            System.err.println("发送新文章通知邮件失败: " + e.getMessage());
+        }
+    }
+
+    private void sendEmail(String to, String subject, String text) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(text);
+            message.setFrom(emailFrom);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("发送邮件失败: " + e.getMessage());
         }
     }
 }

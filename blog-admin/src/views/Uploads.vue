@@ -3,12 +3,6 @@
     <el-card class="main-card">
       <template #header>
         <div class="card-header">
-          <div class="header-left">
-            <el-icon :size="20" style="margin-right: 8px;">
-              <Folder />
-            </el-icon>
-            <span class="header-title">文件管理</span>
-          </div>
           <div class="header-actions">
             <el-button
               v-if="selectedFiles.length > 0"
@@ -379,7 +373,7 @@ onMounted(() => {
 /* 卡片头部 */
 .card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: normal;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
