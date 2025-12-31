@@ -75,6 +75,11 @@
           </transition>
         </router-view>
       </el-main>
+      <el-footer class="footer">
+        <div class="footer-content">
+          <p>&copy; 2025 MyBlog. 版权所有 | 鄂ICP备2025168059号</p>
+        </div>
+      </el-footer>
     </el-container>
   </el-container>
 </template>
@@ -265,5 +270,19 @@ const handleCommand = async (command) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.footer {
+  background-color: #f5f7fa;
+  border-top: 1px solid #e6e6e6;
+  padding: 10px 20px;
+  text-align: center;
+}
+
+.footer-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #409eff;
+  font-weight: 500;
 }
 </style>

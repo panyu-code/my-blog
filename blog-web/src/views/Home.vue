@@ -167,27 +167,6 @@
               </div>
             </div>
           </el-card>
-
-          <!-- 分类 -->
-          <el-card class="sidebar-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon><Folder /></el-icon>
-                <span>文章分类</span>
-              </div>
-            </template>
-            <div class="categories">
-              <div
-                v-for="category in categories"
-                :key="category.id"
-                class="category-item"
-                @click="router.push(`/category/${category.id}`)"
-              >
-                <span>{{ category.name }}</span>
-                <el-tag size="small">{{ category.count }}</el-tag>
-              </div>
-            </div>
-          </el-card>
         </div>
       </el-col>
     </el-row>

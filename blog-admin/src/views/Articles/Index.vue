@@ -52,7 +52,7 @@
         <el-table-column type="selection" width="55" />
         <el-table-column label="标题" min-width="200" align="center">
           <template #default="{ row }">
-            <span class="article-title" @click="handleView(row)" style="cursor: pointer; color: #409eff; text-decoration: underline;">{{ row.title }}</span>
+            <el-link type="primary" @click="handleView(row)" :underline="false">{{ row.title }}</el-link>
           </template>
         </el-table-column>
         <el-table-column label="作者" width="120" align="center">
@@ -123,7 +123,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLink } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
 import { deleteArticle, getCategoryList } from '../../api/article'
 import request from '../../utils/request'

@@ -8,17 +8,16 @@
       </div>
 
       <div class="footer-section">
-        <h3>友情链接</h3>
+        <h3>相关链接</h3>
         <div class="links">
-          <a href="#" target="_blank">Vue.js</a>
-          <a href="#" target="_blank">Element Plus</a>
-          <a href="#" target="_blank">GitHub</a>
+          <a href="https://gitee.com/" target="_blank">Gitte</a>
+          <a href="https://github.com/" target="_blank">GitHub</a>
         </div>
       </div>
 
       <div class="footer-section">
         <h3>联系方式</h3>
-        <p>Email: blog@example.com</p>
+        <p>Email: panyu_lucky9527@163.com</p>
         <div class="social-links">
           <el-icon :size="20"><Message /></el-icon>
           <el-icon :size="20"><ChatDotRound /></el-icon>
@@ -28,8 +27,7 @@
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; 2024 我的博客. All rights reserved.</p>
-      <p>Powered by Vue 3 + Vite</p>
+      <p>&copy; 2025 MyBlog. 版权所有 | 鄂ICP备2025168059号</p>
     </div>
   </footer>
 </template>
@@ -108,6 +106,11 @@ import { Message, ChatDotRound, Location } from '@element-plus/icons-vue'
   margin: 5px 0;
   font-size: 14px;
   color: #95a5a6;
+}
+
+.footer-bottom p:last-child {
+  color: #409eff;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

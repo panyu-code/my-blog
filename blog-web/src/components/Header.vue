@@ -90,6 +90,7 @@
               <el-avatar :size="36" :src="userStore.userInfo?.avatar">
                 {{ userStore.userInfo?.username?.charAt(0) }}
               </el-avatar>
+              <span class="username-text">{{ userStore.userInfo?.username }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -452,6 +453,15 @@ onMounted(() => {
 
 .user-avatar {
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username-text {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
 }
 
 .auth-buttons {
