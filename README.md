@@ -23,8 +23,6 @@
 - **JDK版本**: Java 17
 - **ORM框架**: MyBatis Plus 3.5.5
 - **数据库**: MySQL 8.x
-- **缓存**: Redis
-- **文档存储**: MongoDB
 - **对象存储**: AWS S3 (兼容 MinIO)
 - **工具类**: Lombok, Commons Lang3, Fastjson2
 
@@ -66,8 +64,6 @@ my-blog/
 - 📝 登录日志记录
 - 🎨 标签颜色自定义
 - 📊 访问统计
-- 💾 Redis缓存
-- 📄 MongoDB文档存储
 - 🗄️ S3对象存储
 
 ## 🛠️ 快速开始
@@ -77,9 +73,7 @@ my-blog/
 - Node.js 16+
 - JDK 17+
 - MySQL 8.0+
-- Redis 5.0+
-- MongoDB 4.0+
-- MinIO / AWS S3
+- AWS S3
 
 ### 后端部署
 
@@ -101,12 +95,6 @@ spring:
     url: jdbc:mysql://localhost:3306/blog
     username: your_username
     password: your_password
-  data:
-    redis:
-      host: localhost
-      port: 6379
-    mongodb:
-      uri: mongodb://localhost:27017/blog
 ```
 
 4. 启动服务
@@ -135,8 +123,12 @@ npm run dev          # 开发环境
 npm run build        # 生产构建
 ```
 
-## 🌐 访问地址
+## 🌐 体验地址
+- 前台地址: http://111.229.61.213
+- 后台地址: http://111.229.61.213/admin
 
+
+## 🌐 访问地址
 - 前台地址: http://localhost:3000
 - 后台地址: http://localhost:3001/admin
 - 后端API: http://localhost:8080
