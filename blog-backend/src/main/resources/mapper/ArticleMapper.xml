@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panyu.mybolg.mapper.ArticleMapper">
+
+    <select id="getCommentCountsByArticleIds" resultType="java.util.Map">
+        SELECT a.id as articleId, COUNT(c.id) as commentCount
+        FROM article a
+        LEFT JOIN comment c ON a.id = c.article_id AND c.status = 1  <!-- 只统计已审核通过的评论 -->
+        WHERE a.id IN
+        <foreach collection="articleIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY a.id
+    </select>
+
+</mapper>

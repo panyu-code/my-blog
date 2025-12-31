@@ -65,6 +65,11 @@ public interface ArticleService extends IService<Article> {
     void fillArticleDetails(List<Article> articles);
 
     /**
+     * 填充文章列表的评论数量
+     */
+    void fillArticleCommentCounts(List<Article> articles);
+
+    /**
      * 发送邮件通知作者审核结果
      */
     void notifyAuthorAuditResult(Article article);

@@ -287,6 +287,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         fillAuthorName(articles);
         fillCategoryName(articles);
         fillTags(articles);
+        fillArticleCommentCounts(articles);
     }
 
     /**
@@ -407,6 +408,34 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             articles.forEach(article -> article.setTagList(new ArrayList<>()));
             throw new RuntimeException("填充标签失败: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void fillArticleCommentCounts(List<Article> articles) {
+        if (articles == null || articles.isEmpty()) {
+            return;
+        }
+        
+        // 收集所有文章ID
+        List<Long> articleIds = articles.stream()
+                .map(Article::getId)
+                .collect(Collectors.toList());
+        
+        // 查询每个文章的评论数量
+        List<Map<String, Object>> commentCounts = baseMapper.getCommentCountsByArticleIds(articleIds);
+        
+        // 将评论数量映射到对应的文章
+        Map<Long, Long> countMap = commentCounts.stream()
+                .collect(Collectors.toMap(
+                        map -> (Long) map.get("articleId"),
+                        map -> (Long) map.get("commentCount")
+                ));
+        
+        // 填充评论数量到文章对象
+        articles.forEach(article -> {
+            Long count = countMap.get(article.getId());
+            article.setCommentCount(count != null ? count.intValue() : 0);
+        });
     }
 
     /**
