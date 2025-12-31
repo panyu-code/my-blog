@@ -145,19 +145,19 @@
           </el-form-item>
         </el-form>
 
-        <el-divider>其他登录方式</el-divider>
+<!--        <el-divider>其他登录方式</el-divider>-->
 
-        <div class="social-login">
-          <el-button circle>
-            <el-icon :size="20"><MessageBox /></el-icon>
-          </el-button>
-          <el-button circle>
-            <el-icon :size="20"><ChatDotRound /></el-icon>
-          </el-button>
-          <el-button circle>
-            <el-icon :size="20"><Connection /></el-icon>
-          </el-button>
-        </div>
+<!--        <div class="social-login">-->
+<!--          <el-button circle>-->
+<!--            <el-icon :size="20"><MessageBox /></el-icon>-->
+<!--          </el-button>-->
+<!--          <el-button circle>-->
+<!--            <el-icon :size="20"><ChatDotRound /></el-icon>-->
+<!--          </el-button>-->
+<!--          <el-button circle>-->
+<!--            <el-icon :size="20"><Connection /></el-icon>-->
+<!--          </el-button>-->
+<!--        </div>-->
       </div>
     </div>
   </div>
