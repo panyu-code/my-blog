@@ -36,6 +36,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (loginUser == null) {
             throw new RuntimeException("用户名或密码错误");
         }
+
+        if (loginUser.getStatus() == 0) {
+            throw new RuntimeException("用户被禁用");
+        }
         
         // 使用MD5验证密码
         if (!PasswordUtil.matches(password, loginUser.getPassword())) {
@@ -94,6 +98,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 验证用户是否存在
         if (loginUser == null) {
             throw new RuntimeException("用户不存在");
+        }
+
+        if (loginUser.getStatus() == 0) {
+            throw new RuntimeException("用户被禁用");
         }
         
         // 更新最近登录时间和IP

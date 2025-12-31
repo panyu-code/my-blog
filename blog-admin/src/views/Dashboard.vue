@@ -50,28 +50,28 @@
             </div>
           </template>
           <el-table :data="recentArticles" style="width: 100%" v-loading="loading">
-            <el-table-column prop="title" label="标题" />
-            <el-table-column label="作者" width="100">
+            <el-table-column prop="title" label="标题" align="center" />
+            <el-table-column label="作者" width="100" align="center">
               <template #default="{ row }">
                 {{ row.authorName || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column label="状态" width="100" align="center">
               <template #default="{ row }">
                 <el-tag :type="row.status === 1 ? 'success' : 'info'">
                   {{ row.status === 1 ? '已发布' : '草稿' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="审核状态" width="120">
+            <el-table-column label="审核状态" width="120" align="center">
               <template #default="{ row }">
                 <el-tag :type="getAuditStatusType(row.auditStatus)">
                   {{ getAuditStatusText(row.auditStatus) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="viewCount" label="浏览量" width="100" />
-            <el-table-column label="发布时间" width="180">
+            <el-table-column prop="viewCount" label="浏览量" width="100" align="center" />
+            <el-table-column label="发布时间" width="180" align="center">
               <template #default="{ row }">
                 {{ formatDate(row.createTime) }}
               </template>
@@ -87,13 +87,13 @@
             </div>
           </template>
           <el-table :data="recentComments" style="width: 100%" v-loading="loading">
-            <el-table-column label="用户" width="100">
+            <el-table-column label="用户" width="100" align="center">
               <template #default="{ row }">
                 {{ row.user?.username || '-' }}
               </template>
             </el-table-column>
-            <el-table-column prop="content" label="评论内容" show-overflow-tooltip />
-            <el-table-column label="评论时间" width="180">
+            <el-table-column prop="content" label="评论内容" show-overflow-tooltip align="center" />
+            <el-table-column label="评论时间" width="180" align="center">
               <template #default="{ row }">
                 {{ formatDate(row.createTime) }}
               </template>

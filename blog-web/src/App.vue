@@ -36,12 +36,11 @@ onMounted(() => {
 
 #app {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #e8f0f7 0%, #f5f7fa 100%);
 }
 
 /* 暗黑模式样式 */
 #app.dark {
-  background: #1a1a1a;
+  background: rgba(26, 26, 26, 0.3);
   color: #e0e0e0;
 }
 

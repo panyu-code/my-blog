@@ -28,10 +28,9 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="分类名称" width="150" />
-        <el-table-column prop="description" label="描述" />
-        <el-table-column label="标签" min-width="300">
+        <el-table-column prop="name" label="分类名称" width="150" align="center"/>
+        <el-table-column prop="description" label="描述"  align="center" />
+        <el-table-column label="标签" min-width="300" align="center">
           <template #default="{ row }">
             <div class="tags-wrapper">
               <el-tag
@@ -58,13 +57,13 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="count" label="文章数" width="100" />
-        <el-table-column label="创建时间" width="180">
+        <el-table-column prop="count" label="文章数" width="100" align="center" />
+        <el-table-column label="创建时间" width="180" align="center">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="primary" size="small" link @click="handleEdit(row)">编辑</el-button>
             <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>

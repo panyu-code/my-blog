@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
 import com.panyu.mybolg.entity.User;
 import com.panyu.mybolg.service.UserService;
+import com.panyu.mybolg.util.PasswordUtil;
 import com.panyu.mybolg.vo.ForgotPasswordRequest;
 import com.panyu.mybolg.vo.LoginRequest;
 import com.panyu.mybolg.vo.RegisterRequest;
@@ -185,10 +186,13 @@ public class UserController {
         if (parts.length < 2) {
             throw new RuntimeException("无效的token");
         }
-        
-        Long userId = Long.parseLong(parts[1]);
-        user.setId(userId);
-        
+        Long userId = user.getId();
+        if(userId == null){
+             userId = Long.parseLong(parts[1]);
+            user.setId(userId);
+        }
+
+
         // 使用 UpdateWrapper 仅更新非空字段
         com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<User> updateWrapper = 
             new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
@@ -197,11 +201,20 @@ public class UserController {
         if (user.getNickname() != null) {
             updateWrapper.set(User::getNickname, user.getNickname());
         }
+
+        if(user.getRole() != null){
+            updateWrapper.set(User::getRole, user.getRole());
+        }
+
         if (user.getEmail() != null) {
             updateWrapper.set(User::getEmail, user.getEmail());
         }
         if (user.getAvatar() != null) {
             updateWrapper.set(User::getAvatar, user.getAvatar());
+        }
+
+        if(user.getStatus() != null){
+            updateWrapper.set(User::getStatus, user.getStatus());
         }
         
         userService.update(updateWrapper);
@@ -299,8 +312,8 @@ public class UserController {
         String captcha = com.panyu.mybolg.util.CaptchaUtil.generateCaptcha();
         String redisKey = com.panyu.mybolg.util.CaptchaUtil.getCaptchaRedisKey(email);
         
-        // 存储到 Redis，有效期 60 秒
-        redisTemplate.opsForValue().set(redisKey, captcha, 1, TimeUnit.MINUTES);
+        // 存储到 Redis，有效期3分钟
+        redisTemplate.opsForValue().set(redisKey, captcha, 3, TimeUnit.MINUTES);
         
         try {
             // 发送邮件
@@ -349,9 +362,8 @@ public class UserController {
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
-        
-        // 更新密码（前端应该应绋终会有密码加密，但考虑到会改变前端逐渐梦改为汉算）
-        user.setPassword(newPassword);
+
+        user.setPassword(PasswordUtil.encryptPassword(newPassword));
         userService.updateById(user);
         
         // 删除验证码

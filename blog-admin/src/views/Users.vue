@@ -13,10 +13,6 @@
               <el-icon><Delete /></el-icon>
               批量删除 ({{ selectedIds.length }})
             </el-button>
-            <el-button type="primary" @click="handleAdd">
-              <el-icon><Plus /></el-icon>
-              新增用户
-            </el-button>
           </div>
         </div>
       </template>
@@ -27,9 +23,8 @@
         </el-form-item>
         <el-form-item label="角色">
           <el-select v-model="searchForm.role" placeholder="选择角色" clearable style="width: 150px;">
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑" value="editor" />
-            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" value="1" />
+            <el-option label="普通用户" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -45,22 +40,20 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="头像" width="80">
+        <el-table-column label="头像" width="80" align="center">
           <template #default="{ row }">
             <el-avatar :src="row.avatar" :size="40" />
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="email" label="邮箱" />
-        <el-table-column label="角色" width="100">
+        <el-table-column prop="username" label="用户名" align="center" />
+        <el-table-column prop="email" label="邮箱" align="center" />
+        <el-table-column label="角色" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.role === 'admin'" type="danger">管理员</el-tag>
-            <el-tag v-else-if="row.role === 'editor'" type="warning">编辑</el-tag>
+            <el-tag v-if="row.role === 1" type="danger">管理员</el-tag>
             <el-tag v-else>普通用户</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -70,12 +63,12 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="注册时间" width="180">
+        <el-table-column label="注册时间" width="180" align="center">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="primary" size="small" link @click="handleEdit(row)">编辑</el-button>
             <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>
@@ -104,19 +97,15 @@
     >
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" />
+          <el-input v-model="form.username" disabled placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="form.email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="密码" prop="password" v-if="!currentRow">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
-        </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="form.role" placeholder="请选择角色">
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑" value="editor" />
-            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" :value=1 />
+            <el-option label="普通用户" :value=0 />
           </el-select>
         </el-form-item>
       </el-form>
@@ -161,21 +150,13 @@ const formatDate = (dateStr) => {
 const form = reactive({
   username: '',
   email: '',
-  password: '',
-  role: 'user'
+  role: ''
 })
 
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
   ],
   role: [
     { required: true, message: '请选择角色', trigger: 'change' }
@@ -212,12 +193,6 @@ const handleReset = () => {
   searchForm.username = ''
   searchForm.role = null
   handleSearch()
-}
-
-const handleAdd = () => {
-  currentRow.value = null
-  Object.assign(form, { username: '', email: '', password: '', role: 'user' })
-  dialogVisible.value = true
 }
 
 const handleEdit = (row) => {
@@ -272,6 +247,7 @@ const handleBatchDelete = async () => {
 }
 
 const handleStatusChange = async (row) => {
+  console.log('row===========', row.id, row.status)
   try {
     await updateUser({ id: row.id, status: row.status })
     ElMessage.success(`已${row.status === 1 ? '启用' : '禁用'}用户`)

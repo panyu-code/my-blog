@@ -1,9 +1,0 @@
-.DS_Store
-.idea/
-*.log
-node_modules/
-*.tmp
-dist/
-build/
-.env
-npm-debug.log*

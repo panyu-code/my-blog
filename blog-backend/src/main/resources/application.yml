@@ -28,3 +28,8 @@ springdoc:
 weather:
   api:
     key: 590f8257313043b0 # 从环境变量获取，如果没有则为空
+
+logging:
+  level:
+    root: info
+    com.panyu.mybolg: debug

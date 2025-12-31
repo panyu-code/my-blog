@@ -50,23 +50,22 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="标题" min-width="200">
+        <el-table-column label="标题" min-width="200" align="center">
           <template #default="{ row }">
             <span class="article-title" @click="handleView(row)" style="cursor: pointer; color: #409eff; text-decoration: underline;">{{ row.title }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="作者" width="120">
+        <el-table-column label="作者" width="120" align="center">
           <template #default="{ row }">
             {{ row.authorName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="分类" width="100">
+        <el-table-column label="分类" width="100" align="center" >
           <template #default="{ row }">
             {{ categoryMap[row.categoryId] || row.categoryId || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="标签" width="200">
+        <el-table-column label="标签" width="200" align="center">
           <template #default="{ row }">
             <el-tag 
               v-if="(row.tags && row.tags.length > 0) || (row.tagList && row.tagList.length > 0)" 
@@ -79,27 +78,27 @@
             <span v-else style="color: #909399;">无</span>
           </template>
         </el-table-column>
-        <el-table-column prop="viewCount" label="浏览量" width="100" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="viewCount" label="浏览量" width="100" align="center"/>
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'">
               {{ row.status === 1 ? '已发布' : '草稿' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="审核状态" width="120">
+        <el-table-column label="审核状态" width="120" align="center">
           <template #default="{ row }">
             <el-tag :type="getAuditStatusType(row.auditStatus)">
               {{ getAuditStatusText(row.auditStatus) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="发布时间" width="180">
+        <el-table-column label="发布时间" width="180" align="center">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>
           </template>

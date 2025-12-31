@@ -36,33 +36,32 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="用户" width="120">
+        <el-table-column label="用户" width="120" align="center">
           <template #default="{ row }">
             {{ row.user?.username || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="articleId" label="文章ID" width="100" />
-        <el-table-column label="类型" width="100">
+        <el-table-column prop="articleId" label="文章ID" width="100" align="center" />
+        <el-table-column label="类型" width="100" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.parentId === 0" type="primary">一级评论</el-tag>
             <el-tag v-else type="info">回复({{ row.parentId }})</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="评论内容" min-width="300" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="content" label="评论内容" min-width="300" align="center"/>
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.status === 0" type="warning">待审核</el-tag>
             <el-tag v-else-if="row.status === 1" type="success">已通过</el-tag>
             <el-tag v-else type="danger">已拒绝</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="评论时间" width="180">
+        <el-table-column label="评论时间" width="180" align="center">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right" align="center">
           <template #default="{ row }">
             <el-button
               v-if="row.status === 0"
