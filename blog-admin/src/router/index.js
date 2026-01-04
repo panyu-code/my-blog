@@ -102,7 +102,11 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !token) {
     next('/login')
-  } else if (to.path === '/login' && token) {
+  } else if (to.path === '/login' && token && userInfo) {
+    if(userInfo.role !== 1){
+      ElMessage.error('您没有权限访问该页面')
+      next(from.path || '/')
+    }
     next('/')
   } else if (to.meta.requiresAdmin) {
     // 检查是否为管理员（username === 'admin' 或 role === 1）
