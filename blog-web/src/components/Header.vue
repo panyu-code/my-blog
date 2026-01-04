@@ -32,7 +32,7 @@
               <template #reference>
                 <div class="weather-display" v-if="weatherData">
                   <div class="weather-icon">{{ getWeatherIcon(weatherData.weather) }}</div>
-                  <div class="weather-temp">{{ weatherData.temperature.split('-')[1] || weatherData.temperature }}</div>
+                  <div class="weather-temp">{{ weatherData.temperature }}</div>
                   <div class="weather-location">{{ city }}</div>
                 </div>
                 <div v-else class="weather-display">
