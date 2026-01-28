@@ -3,7 +3,9 @@ package com.panyu.mybolg.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
 import com.panyu.mybolg.entity.User;
+import com.panyu.mybolg.exception.UnauthorizedException;
 import com.panyu.mybolg.service.UserService;
+import com.panyu.mybolg.util.JwtUtil;
 import com.panyu.mybolg.util.PasswordUtil;
 import com.panyu.mybolg.vo.ForgotPasswordRequest;
 import com.panyu.mybolg.vo.LoginRequest;
@@ -39,6 +41,9 @@ public class UserController {
     
     @Value("${spring.mail.username}")
     private String emailFrom;
+
+    @Resource
+    private JwtUtil jwtUtil;
     
     @Operation(summary = "用户登录", description = "支持账号密码、图形验证码和邮箱验证码的登录接口")
     @PostMapping("/login")
@@ -173,23 +178,15 @@ public class UserController {
     @Operation(summary = "更新用户信息", description = "更新用户信息")
     @PutMapping("/info")
     public Result<User> updateUserInfo(@RequestBody User user, HttpServletRequest request) {
-        // 获取当前登录用户ID（从token中提取）
         String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("未授权");
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            throw new UnauthorizedException("未授权或token已过期");
         }
-        
-        // 从token中提取用户ID
-        // 格式: Bearer token_${userId}_${timestamp}
-        String tokenStr = token.substring(7);
-        String[] parts = tokenStr.split("_");
-        if (parts.length < 2) {
-            throw new RuntimeException("无效的token");
-        }
-        Long userId = user.getId();
-        if(userId == null){
-             userId = Long.parseLong(parts[1]);
+        if (user.getId() == null) {
             user.setId(userId);
+        } else {
+            userId = user.getId();
         }
 
 
@@ -255,19 +252,12 @@ public class UserController {
             throw new RuntimeException("新密码不能为空，且长度不能少于6位");
         }
         
-        // 获取当前登录用户ID（从token中提取）
         String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("未授权");
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            throw new UnauthorizedException("未授权或token已过期");
         }
         
-        String tokenStr = token.substring(7);
-        String[] parts = tokenStr.split("_");
-        if (parts.length < 2) {
-            throw new RuntimeException("无效的token");
-        }
-        
-        Long userId = Long.parseLong(parts[1]);
         User user = userService.getById(userId);
         
         if (user == null) {

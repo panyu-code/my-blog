@@ -8,6 +8,7 @@ import com.panyu.mybolg.mapper.UserMapper;
 import com.panyu.mybolg.service.UserService;
 import com.panyu.mybolg.util.CaptchaUtil;
 import com.panyu.mybolg.util.IpUtil;
+import com.panyu.mybolg.util.JwtUtil;
 import com.panyu.mybolg.util.PasswordUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Resource
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    private JwtUtil jwtUtil;
     
     @Override
     public Map<String, Object> login(String username, String password, HttpServletRequest request) {
@@ -51,8 +55,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginUser.setLastLoginIp(IpUtil.getClientIp(request));
         updateById(loginUser);
         
-        // 生成token
-        String token = "token_" + loginUser.getId() + "_" + System.currentTimeMillis();
+        // 生成 JWT
+        String token = jwtUtil.generateToken(loginUser.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("userInfo", loginUser);
@@ -113,8 +117,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisTemplate.delete(redisKey);
         redisTemplate.delete(errorCountKey);
         
-        // 生成token
-        String token = "token_" + loginUser.getId() + "_" + System.currentTimeMillis();
+        // 生成 JWT
+        String token = jwtUtil.generateToken(loginUser.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("userInfo", loginUser);
