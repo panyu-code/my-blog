@@ -71,6 +71,11 @@ server:
       max-file-size: 128MB
       max-request-size: 128MB
 
+# JWT 配置（本地可覆盖，与 application.yml 保持一致即可）
+jwt:
+  secret: "otSW5/ZEGa99ceGdTPkbuGhPDPrquWXGNLxmBZ6C3Lc="
+  expiration: 604800000
+
 # RustFS/MinIO 配置 - 本地开发环境
 rustfs:
   endpoint: http://localhost:9000

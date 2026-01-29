@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
 import com.panyu.mybolg.entity.Article;
 import com.panyu.mybolg.exception.BusinessException;
+import com.panyu.mybolg.exception.UnauthorizedException;
 import com.panyu.mybolg.service.ArticleService;
+import com.panyu.mybolg.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +26,9 @@ public class ArticleController {
 
     @Resource
     private ArticleService articleService;
+
+    @Resource
+    private JwtUtil jwtUtil;
 
     @Operation(summary = "文章列表", description = "分页查询文章列表，支持标题、分类、状态筛选（Web端：只显示已审核文章）")
     @GetMapping("/list")
@@ -65,10 +70,9 @@ public class ArticleController {
             @Parameter(description = "文章标题") @RequestParam(required = false) String title,
             @Parameter(description = "状态(0:草稿,1:已发布)") @RequestParam(required = false) Integer status,
             @RequestHeader("Authorization") String token) {
-        // 从token中提取用户ID
-        Long userId = getCurrentUserIdFromToken(token);
+        Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new BusinessException(401, "用户未登录或token无效");
+            throw new UnauthorizedException("用户未登录或token无效");
         }
         
         Page<Article> result = articleService.listUserArticles(userId, pageNum, pageSize, title, status);
@@ -77,26 +81,6 @@ public class ArticleController {
         data.put("list", result.getRecords());
         data.put("total", result.getTotal());
         return Result.success(data);
-    }
-
-    // 从token中提取用户ID的方法
-    private Long getCurrentUserIdFromToken(String token) {
-        // 移除Bearer前缀
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        
-        // 从token中解析用户ID
-        // 根据UserController中的实现，token格式为 "token_${userId}_${timestamp}"
-        try {
-            String[] parts = token.split("_");
-            if (parts.length >= 2) {
-                return Long.parseLong(parts[1]); // 用户ID是第二部分
-            }
-        } catch (Exception e) {
-            System.err.println("解析用户ID失败: " + e.getMessage());
-        }
-        return null;
     }
 
     @Operation(summary = "获取文章详情", description = "根据ID获取文章详细信息")
@@ -169,10 +153,9 @@ public class ArticleController {
     @Operation(summary = "更新自己的文章", description = "更新用户自己的文章信息")
     @PutMapping("/user")
     public Result<Article> updateUserArticle(@RequestBody Article article, @RequestHeader("Authorization") String token) {
-        // 从token中提取用户ID
-        Long userId = getCurrentUserIdFromToken(token);
+        Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new BusinessException(401, "用户未登录或token无效");
+            throw new UnauthorizedException("用户未登录或token无效");
         }
         
         // 验证文章是否属于当前用户
@@ -278,10 +261,9 @@ public class ArticleController {
     public Result<Void> resubmit(
             @Parameter(description = "文章ID") @PathVariable Long id,
             @RequestHeader("Authorization") String token) {
-        // 从token中提取用户ID
-        Long userId = getCurrentUserIdFromToken(token);
+        Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new BusinessException(401, "用户未登录或token无效");
+            throw new UnauthorizedException("用户未登录或token无效");
         }
         
         Article article = articleService.getById(id);
@@ -289,7 +271,6 @@ public class ArticleController {
             throw new BusinessException(404, "文章不存在");
         }
         
-        // 验证文章是否属于当前用户
         if (!article.getAuthorId().equals(userId)) {
             throw new BusinessException(403, "无权限操作此文章");
         }
@@ -318,10 +299,9 @@ public class ArticleController {
     public Result<Article> getUserArticleDetail(
             @Parameter(description = "文章ID") @PathVariable Long id,
             @RequestHeader("Authorization") String token) {
-        // 从token中提取用户ID
-        Long userId = getCurrentUserIdFromToken(token);
+        Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new BusinessException(401, "用户未登录或token无效");
+            throw new UnauthorizedException("用户未登录或token无效");
         }
         
         Article article = articleService.getDetailById(id);
