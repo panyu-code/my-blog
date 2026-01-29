@@ -48,6 +48,11 @@
               </div>
             </el-form-item>
             <el-form-item>
+              <div class="remember-forgot">
+                <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
+              </div>
+            </el-form-item>
+            <el-form-item>
               <el-button
                 type="primary"
                 size="large"
@@ -118,6 +123,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { login, sendEmailCaptcha } from '../api/user'
 import { adminLogin } from '../api/user'
+import crypto from '../utils/crypto'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -131,12 +137,20 @@ const accountCaptchaLoading = ref(false)
 const accountCaptchaImage = ref(null)
 const accountCaptchaId = ref(null)
 
+// 从 localStorage 读取记住的用户信息
+const savedUsername = localStorage.getItem('admin_rememberedUsername') || ''
+// 使用加密工具解密密码
+const savedEncryptedPassword = localStorage.getItem('admin_rememberedEncryptedPassword') || ''
+const savedPassword = savedEncryptedPassword ? crypto.decrypt(savedEncryptedPassword) : ''
+const isRemembered = localStorage.getItem('admin_rememberMe') === 'true'
+
 const loginForm = reactive({
-  username: '',
-  password: '',
+  username: savedUsername,
+  password: savedPassword,
   email: '',
   emailCaptcha: '',
-  captcha: ''
+  captcha: '',
+  remember: isRemembered  // 添加记住我字段
 })
 
 const rules = {
@@ -249,6 +263,19 @@ const handleLogin = async () => {
         password: loginForm.password,
         captchaId: accountCaptchaId.value,
         captcha: loginForm.captcha
+      }
+      
+      // 处理"记住我"功能 - 安全存储密码
+      if (loginForm.remember) {
+        localStorage.setItem('admin_rememberedUsername', loginForm.username)
+        // 加密后存储密码，而不是明文存储
+        const encryptedPassword = crypto.encrypt(loginForm.password)
+        localStorage.setItem('admin_rememberedEncryptedPassword', encryptedPassword)
+        localStorage.setItem('admin_rememberMe', 'true')
+      } else {
+        localStorage.removeItem('admin_rememberedUsername')
+        localStorage.removeItem('admin_rememberedEncryptedPassword')  // 删除加密密码
+        localStorage.removeItem('admin_rememberMe')
       }
     } else {
       // 邮箱登录
@@ -385,5 +412,14 @@ onMounted(() => {
   :deep(.el-tabs__content) {
     padding: 0 !important;
   }
+}
+
+/* 添加记住我和忘记密码的样式 */
+.remember-forgot {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 </style>

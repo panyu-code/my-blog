@@ -60,6 +60,10 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
+    // 清除记住我的相关信息
+    // localStorage.removeItem('rememberedUsername')
+    // localStorage.removeItem('rememberedEncryptedPassword')
+    // localStorage.removeItem('rememberMe')
   }
 
   return {

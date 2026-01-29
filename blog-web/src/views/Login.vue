@@ -170,6 +170,7 @@ import { User, Lock, MessageBox, ChatDotRound, Connection, Message } from '@elem
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 import { sendEmailCaptcha } from '../api/user'
+import crypto from '../utils/crypto'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -189,7 +190,9 @@ const isEmailFormValid = ref(false)
 
 // 从 localStorage 读取记住的用户信息
 const savedUsername = localStorage.getItem('rememberedUsername') || ''
-const savedPassword = localStorage.getItem('rememberedPassword') || ''
+// 使用加密工具解密密码
+const savedEncryptedPassword = localStorage.getItem('rememberedEncryptedPassword') || ''
+const savedPassword = savedEncryptedPassword ? crypto.decrypt(savedEncryptedPassword) : ''
 const isRemembered = localStorage.getItem('rememberMe') === 'true'
 
 const loginForm = reactive({
@@ -325,14 +328,16 @@ const handleLogin = async () => {
       await loginFormRef.value.validate()
       formRef = loginFormRef
       
-      // 处理"记住我"功能
+      // 处理"记住我"功能 - 安全存储密码
       if (loginForm.remember) {
         localStorage.setItem('rememberedUsername', loginForm.username)
-        localStorage.setItem('rememberedPassword', loginForm.password)
+        // 加密后存储密码，而不是明文存储
+        const encryptedPassword = crypto.encrypt(loginForm.password)
+        localStorage.setItem('rememberedEncryptedPassword', encryptedPassword)
         localStorage.setItem('rememberMe', 'true')
       } else {
         localStorage.removeItem('rememberedUsername')
-        localStorage.removeItem('rememberedPassword')
+        localStorage.removeItem('rememberedEncryptedPassword')  // 删除加密密码
         localStorage.removeItem('rememberMe')
       }
       

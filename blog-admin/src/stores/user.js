@@ -20,6 +20,10 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {}
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_userInfo')
+    // 清除记住我的相关信息
+    // localStorage.removeItem('admin_rememberedUsername')
+    // localStorage.removeItem('admin_rememberedEncryptedPassword')
+    // localStorage.removeItem('admin_rememberMe')
   }
 
   return {

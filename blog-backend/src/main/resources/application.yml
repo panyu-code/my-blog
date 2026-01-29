@@ -24,10 +24,6 @@ springdoc:
   packages-to-scan: com.panyu.mybolg.controller
   default-flat-param-object: false
 
-# JWT 配置（secret 为 32 字节 Base64，符合 HS256 要求）
-jwt:
-  secret: "otSW5/ZEGa99ceGdTPkbuGhPDPrquWXGNLxmBZ6C3Lc="
-  expiration: 604800000  # 7天，单位毫秒
 
 # 天气API配置
 weather:
