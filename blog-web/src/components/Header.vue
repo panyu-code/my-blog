@@ -31,9 +31,9 @@
             >
               <template #reference>
                 <div class="weather-display" v-if="weatherData">
-                  <div class="weather-icon">{{ getWeatherIcon(weatherData.weather) }}</div>
-                  <div class="weather-temp">{{ weatherData.temperature }}</div>
                   <div class="weather-location">{{ city }}</div>
+                  <div class="weather-icon">{{ getWeatherIcon(weatherData?.textDay) }}</div>
+                  <div class="weather-temp">{{ weatherData.tempMin}}~{{weatherData.tempMax}}℃</div>
                 </div>
                 <div v-else class="weather-display">
                   <el-icon><Loading /></el-icon>
@@ -41,19 +41,22 @@
                 </div>
               </template>
               <div class="weather-popover">
-                <h4>{{ city }} 天气详情</h4>
+                <h4>{{ city }} 天气详情  {{weatherData?.fxDate}}</h4>
                 <div class="weather-detail">
                   <div class="weather-main">
-                    <div class="weather-icon-large">{{ getWeatherIcon(weatherData?.weather) }}</div>
+                    <div class="weather-icon-large">{{ getWeatherIcon(weatherData?.textDay) }}</div>
                     <div class="weather-info">
-                      <div class="weather-current">{{ weatherData?.temperature }}</div>
-                      <div class="weather-desc">{{ weatherData?.weather }}</div>
-                      <div class="weather-wind">{{ weatherData?.wind }}</div>
+                      <div class="weather-desc">{{ weatherData?.textDay }}</div>
+                      <div class="weather-wind">{{ weatherData?.windDirDay }}{{weatherData?.windScaleDay}}级</div>
                     </div>
                   </div>
                   <div class="weather-air-quality">
-                    <span class="air-quality-label">空气质量：</span>
-                    <span class="air-quality-value">{{ weatherData?.air_quality }}</span>
+                    <span class="air-quality-label">紫外线强度：</span>
+                    <span class="air-quality-value">{{ weatherData?.uvIndex }}</span>
+                  </div>
+                  <div class="weather-air-quality">
+                    <span class="air-quality-label">相对湿度：</span>
+                    <span class="air-quality-value">{{ weatherData?.humidity }}%</span>
                   </div>
                 </div>
               </div>
@@ -221,39 +224,15 @@ const fetchWeather = async () => {
     
     if (ipResponse.code === 200 && ipResponse.data && ipResponse.data.data) {
       const address = ipResponse.data.data.address
-      // 解析地址，获取省之后的部分
-      const provinceIndex = address.indexOf('省')
-      let cityName = address
-      if (provinceIndex !== -1) {
-        cityName = address.substring(provinceIndex + 1)
-        // 进一步提取市及市后面的信息（如区、县等）
-        const cityIndex = cityName.indexOf('市')
-        if (cityIndex !== -1) {
-          // 找到市之后的第一个分隔符（如逗号或其他分隔符），或者取到下一个可能的地理单位
-          let endIndex = cityName.length
-          
-          // 查找市之后的其他地理单位
-          const nextGeographicUnit = ['区', '县', '旗', '自治县', '市辖区']
-          for (const unit of nextGeographicUnit) {
-            const unitIndex = cityName.indexOf(unit, cityIndex)
-            if (unitIndex !== -1 && unitIndex > cityIndex) {
-              endIndex = Math.min(endIndex, unitIndex + unit.length)
-              break
-            }
-          }
-          
-          cityName = cityName.substring(0, endIndex)
-        }
-      }
-      
-      city.value = cityName
+
       
       // 获取天气信息
-      const weatherResponse = await getWeather(cityName)
+      const weatherResponse = await getWeather(address)
       
       if (weatherResponse.code === 200 && weatherResponse.data && weatherResponse.data.data && weatherResponse.data.data.data && weatherResponse.data.data.data.length > 0) {
         // 获取当天的天气数据
-        weatherData.value = weatherResponse.data.data.data[1]
+        city.value = weatherResponse.data.data.city.LocationNameZH || '未知'
+        weatherData.value = weatherResponse.data.data.data[0]
       }
     } else {
       console.error('获取IP位置失败:', ipResponse)
