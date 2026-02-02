@@ -2,6 +2,7 @@ package com.panyu.mybolg.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class User {
 
     private String username;
 
+    @JsonIgnore  // 序列化时忽略密码字段，防止密码泄露
     private String password;
 
     private String nickname;

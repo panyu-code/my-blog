@@ -31,6 +31,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public Map<String, Object> login(String username, String password, HttpServletRequest request) {
+        // 检查登录失败次数
+        String loginErrorKey = "login_error_" + username;
+        Integer errorCount = getErrorCount(loginErrorKey);
+        
+        if (errorCount >= 5) {
+            throw new RuntimeException("登录失败次数过多，请半小时后重试");
+        }
+        
         // 查询用户
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
@@ -38,6 +46,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         
         // 验证用户是否存在
         if (loginUser == null) {
+            // 增加错误计数
+            incrementErrorCount(loginErrorKey, 30, TimeUnit.MINUTES);
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -47,8 +57,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         
         // 使用MD5验证密码
         if (!PasswordUtil.matches(password, loginUser.getPassword())) {
+            // 增加错误计数
+            incrementErrorCount(loginErrorKey, 30, TimeUnit.MINUTES);
             throw new RuntimeException("用户名或密码错误");
         }
+        
+        // 登录成功，清除错误计数
+        redisTemplate.delete(loginErrorKey);
         
         // 更新最近登录时间和IP
         loginUser.setLastLoginTime(LocalDateTime.now());
@@ -207,5 +222,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         
         return page(page, wrapper);
+    }
+    
+    /**
+     * 获取错误次数
+     */
+    private Integer getErrorCount(String errorCountKey) {
+        Integer errorCount = 0;
+        Object countObj = redisTemplate.opsForValue().get(errorCountKey);
+        if (countObj != null) {
+            try {
+                errorCount = Integer.parseInt(countObj.toString());
+            } catch (NumberFormatException e) {
+                errorCount = 0;
+            }
+        }
+        return errorCount;
+    }
+    
+    /**
+     * 增加错误计数
+     */
+    private void incrementErrorCount(String errorCountKey, long timeout, TimeUnit timeUnit) {
+        Integer errorCount = getErrorCount(errorCountKey);
+        errorCount++;
+        redisTemplate.opsForValue().set(errorCountKey, errorCount.toString(), timeout, timeUnit);
     }
 }

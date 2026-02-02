@@ -2,9 +2,11 @@ package com.panyu.mybolg.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
+import com.panyu.mybolg.context.UserContext;
 import com.panyu.mybolg.entity.User;
 import com.panyu.mybolg.exception.UnauthorizedException;
 import com.panyu.mybolg.service.UserService;
+import com.panyu.mybolg.util.CaptchaValidator;
 import com.panyu.mybolg.util.JwtUtil;
 import com.panyu.mybolg.util.PasswordUtil;
 import com.panyu.mybolg.vo.ForgotPasswordRequest;
@@ -45,51 +47,52 @@ public class UserController {
     @Resource
     private JwtUtil jwtUtil;
     
+    @Resource
+    private CaptchaValidator captchaValidator;
+    
     @Operation(summary = "用户登录", description = "支持账号密码、图形验证码和邮箱验证码的登录接口")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        Map<String, Object> result = performLogin(loginRequest, request, false);
+        return Result.success(result);
+    }
+        
+    @Operation(summary = "管理员登录", description = "管理员登录接口，需要检查管理员权限")
+    @PostMapping("/admin-login")
+    public Result<Map<String, Object>> adminLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        Map<String, Object> result = performLogin(loginRequest, request, true);
+        return Result.success(result);
+    }
+        
+    /**
+     * 统一的登录逻辑处理
+     */
+    private Map<String, Object> performLogin(LoginRequest loginRequest, HttpServletRequest request, boolean requireAdmin) {
+        Map<String, Object> result;
+            
         // 判断是账号密码登陆、图形验证码登陆还是邮箱验证码登陆
         if (loginRequest.getEmail() != null && !loginRequest.getEmail().isEmpty()) {
             // 邮箱验证码登录
-            Map<String, Object> result = userService.loginByEmail(loginRequest.getEmail(), loginRequest.getEmailCaptcha(), request);
-            return Result.success(result);
+            captchaValidator.validateEmailCaptcha(loginRequest.getEmail(), loginRequest.getEmailCaptcha());
+            result = userService.loginByEmail(loginRequest.getEmail(), loginRequest.getEmailCaptcha(), request);
         } else if (loginRequest.getCaptchaId() != null && !loginRequest.getCaptchaId().isEmpty()) {
-            // 账号带图形验证码登录，先校验图形验证码
-            String storedCode = redisTemplate.opsForValue().get(loginRequest.getCaptchaId());
-            if (storedCode == null || storedCode.isEmpty()) {
-                throw new RuntimeException("验证码已过期");
-            }
-            
-            // 检查验证码错误次数
-            String errorCountKey = "captcha_error_" + loginRequest.getCaptchaId();
-            Integer errorCount = 0;
-            Object countObj = redisTemplate.opsForValue().get(errorCountKey);
-            if (countObj != null) {
-                errorCount = Integer.parseInt(countObj.toString());
-            }
-            
-            if (errorCount >= 3) {
-                throw new RuntimeException("验证码输入错误次数过多，请重新获取");
-            }
-            
-            if (!storedCode.equalsIgnoreCase(loginRequest.getCaptcha())) {
-                // 增加错误计数
-                errorCount++;
-                redisTemplate.opsForValue().set(errorCountKey, errorCount.toString(), 30, TimeUnit.SECONDS);
-                throw new RuntimeException("验证码错误，还有" + (3 - errorCount) + "次尝试机会");
-            }
-            
-            // 验证成功，删除验证码和错误计数
-            redisTemplate.delete(loginRequest.getCaptchaId());
-            redisTemplate.delete(errorCountKey);
-            // 账号密码登录
-            Map<String, Object> result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
-            return Result.success(result);
+            // 账号带图形验证码登录
+            captchaValidator.validateImageCaptcha(loginRequest.getCaptchaId(), loginRequest.getCaptcha());
+            result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
         } else {
             // 纯账号密码登录（不需要图形验证码）
-            Map<String, Object> result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
-            return Result.success(result);
+            result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
         }
+            
+        // 如果是管理员登录，检查用户角色
+        if (requireAdmin) {
+            User user = (User) result.get("userInfo");
+            if (user.getRole() != 1) {
+                throw new RuntimeException("您没有权限访问后台管理系统");
+            }
+        }
+            
+        return result;
     }
     
     @Operation(summary = "用户注册", description = "新用户注册接口，需要邮箱验证码")
@@ -104,48 +107,15 @@ public class UserController {
         return Result.success(registeredUser);
     }
     
-    @PostMapping("/admin-login")
-    public Result<Map<String, Object>> adminLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
-        // Perform standard login first
-        Map<String, Object> result;
-        try {
-            if (loginRequest.getEmail() != null && !loginRequest.getEmail().isEmpty()) {
-                result = userService.loginByEmail(loginRequest.getEmail(), loginRequest.getEmailCaptcha(), request);
-            } else if (loginRequest.getCaptchaId() != null && !loginRequest.getCaptchaId().isEmpty()) {
-                String storedCode = redisTemplate.opsForValue().get(loginRequest.getCaptchaId());
-                if (storedCode == null || storedCode.isEmpty()) {
-                    throw new RuntimeException("Captcha expired");
-                }
-                String errorCountKey = "captcha_error_" + loginRequest.getCaptchaId();
-                Integer errorCount = 0;
-                Object countObj = redisTemplate.opsForValue().get(errorCountKey);
-                if (countObj != null) {
-                    errorCount = Integer.parseInt(countObj.toString());
-                }
-                if (errorCount >= 3) {
-                    throw new RuntimeException("Too many captcha errors");
-                }
-                if (!storedCode.equalsIgnoreCase(loginRequest.getCaptcha())) {
-                    errorCount++;
-                    redisTemplate.opsForValue().set(errorCountKey, errorCount.toString(), 30, TimeUnit.SECONDS);
-                    throw new RuntimeException("Captcha error");
-                }
-                redisTemplate.delete(loginRequest.getCaptchaId());
-                redisTemplate.delete(errorCountKey);
-                result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
-            } else {
-                result = userService.login(loginRequest.getUsername(), loginRequest.getPassword(), request);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Login failed: " + e.getMessage());
+    @Operation(summary = "用户登出", description = "用户登出，将token加入黑名单")
+    @PostMapping("/logout")
+    public Result<String> logout(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            String token = authorization.substring(7).trim();
+            jwtUtil.blacklistToken(token);
         }
-        
-        // Check if user is admin
-        User user = (User) result.get("userInfo");
-        if (user.getRole() != 1) {
-            throw new RuntimeException("\u60a8\u6ca1\u6709\u6743\u9650\u8bbf\u95ee\u540e\u53f0\u7ba1\u7406\u7cfb\u7edf");
-        }
-        return Result.success(result);
+        return Result.success("登出成功");
     }
     
     @Operation(summary = "检查用户名是否存在", description = "检查用户名是否已被注册")
@@ -177,41 +147,27 @@ public class UserController {
     
     @Operation(summary = "更新用户信息", description = "更新用户信息")
     @PutMapping("/info")
-    public Result<User> updateUserInfo(@RequestBody User user, HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("未授权或token已过期");
-        }
-        if (user.getId() == null) {
-            user.setId(userId);
-        } else {
-            userId = user.getId();
-        }
+    public Result<User> updateUserInfo(@RequestBody User user) {
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
+        
+        // 强制使用当前登录用户的ID，防止越权修改他人信息
+        user.setId(userId);
 
-
-        // 使用 UpdateWrapper 仅更新非空字段
+        // 使用 UpdateWrapper 仅更新非敏感字段
         com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<User> updateWrapper = 
             new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
         updateWrapper.eq(User::getId, userId);
         
+        // 只允许更新昵称、邮箱、头像，禁止更新role、status等敏感字段
         if (user.getNickname() != null) {
             updateWrapper.set(User::getNickname, user.getNickname());
         }
-
-        if(user.getRole() != null){
-            updateWrapper.set(User::getRole, user.getRole());
-        }
-
         if (user.getEmail() != null) {
             updateWrapper.set(User::getEmail, user.getEmail());
         }
         if (user.getAvatar() != null) {
             updateWrapper.set(User::getAvatar, user.getAvatar());
-        }
-
-        if(user.getStatus() != null){
-            updateWrapper.set(User::getStatus, user.getStatus());
         }
         
         userService.update(updateWrapper);
@@ -241,7 +197,7 @@ public class UserController {
     
     @Operation(summary = "修改密码", description = "修改当前登录用户的密码")
     @PostMapping("/change-password")
-    public Result<String> changePassword(@RequestBody Map<String, String> params, HttpServletRequest request) {
+    public Result<String> changePassword(@RequestBody Map<String, String> params) {
         String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
         
@@ -252,11 +208,8 @@ public class UserController {
             throw new RuntimeException("新密码不能为空，且长度不能少于6位");
         }
         
-        String token = request.getHeader("Authorization");
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("未授权或token已过期");
-        }
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
         
         User user = userService.getById(userId);
         

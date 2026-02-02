@@ -3,6 +3,7 @@ package com.panyu.mybolg.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
+import com.panyu.mybolg.context.UserContext;
 import com.panyu.mybolg.entity.Article;
 import com.panyu.mybolg.exception.BusinessException;
 import com.panyu.mybolg.exception.UnauthorizedException;
@@ -68,12 +69,9 @@ public class ArticleController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") Integer pageSize,
             @Parameter(description = "文章标题") @RequestParam(required = false) String title,
-            @Parameter(description = "状态(0:草稿,1:已发布)") @RequestParam(required = false) Integer status,
-            @RequestHeader("Authorization") String token) {
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("用户未登录或token无效");
-        }
+            @Parameter(description = "状态(0:草稿,1:已发布)") @RequestParam(required = false) Integer status) {
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
         
         Page<Article> result = articleService.listUserArticles(userId, pageNum, pageSize, title, status);
 
@@ -152,11 +150,9 @@ public class ArticleController {
 
     @Operation(summary = "更新自己的文章", description = "更新用户自己的文章信息")
     @PutMapping("/user")
-    public Result<Article> updateUserArticle(@RequestBody Article article, @RequestHeader("Authorization") String token) {
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("用户未登录或token无效");
-        }
+    public Result<Article> updateUserArticle(@RequestBody Article article) {
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
         
         // 验证文章是否属于当前用户
         Article existingArticle = articleService.getById(article.getId());
@@ -258,13 +254,9 @@ public class ArticleController {
 
     @Operation(summary = "重新提交审核", description = "将审核不通过的文章重新提交审核")
     @PostMapping("/{id}/resubmit")
-    public Result<Void> resubmit(
-            @Parameter(description = "文章ID") @PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("用户未登录或token无效");
-        }
+    public Result<Void> resubmit(@Parameter(description = "文章ID") @PathVariable Long id) {
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
         
         Article article = articleService.getById(id);
         if (article == null) {
@@ -296,13 +288,9 @@ public class ArticleController {
 
     @Operation(summary = "获取自己的文章详情", description = "根据ID获取用户自己的文章详细信息")
     @GetMapping("/user/{id}")
-    public Result<Article> getUserArticleDetail(
-            @Parameter(description = "文章ID") @PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new UnauthorizedException("用户未登录或token无效");
-        }
+    public Result<Article> getUserArticleDetail(@Parameter(description = "文章ID") @PathVariable Long id) {
+        // 从 ThreadLocal 获取当前用户ID
+        Long userId = UserContext.getUserId();
         
         Article article = articleService.getDetailById(id);
         if (article == null) {
