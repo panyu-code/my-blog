@@ -5,9 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
 import com.panyu.mybolg.context.UserContext;
 import com.panyu.mybolg.entity.Article;
+import com.panyu.mybolg.entity.User;
 import com.panyu.mybolg.exception.BusinessException;
-import com.panyu.mybolg.exception.UnauthorizedException;
 import com.panyu.mybolg.service.ArticleService;
+import com.panyu.mybolg.service.UserService;
 import com.panyu.mybolg.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +28,8 @@ public class ArticleController {
 
     @Resource
     private ArticleService articleService;
+    @Resource
+    private UserService userService;
 
     @Resource
     private JwtUtil jwtUtil;
@@ -84,13 +87,22 @@ public class ArticleController {
     @Operation(summary = "获取文章详情", description = "根据ID获取文章详细信息")
     @GetMapping("/{id}")
     public Result<Article> getById(@Parameter(description = "文章ID") @PathVariable Long id) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(401, "用户未登录");
+        }
+        // 判断是不是管理员
+        User user = userService.getById(userId);
+        if(user == null){
+            throw new BusinessException(404, "用户不存在");
+        }
         Article article = articleService.getById(id);
         if (article == null) {
             throw new BusinessException(404, "文章不存在");
         }
         
         // 只有已发布且已审核通过的文章才能被普通用户访问
-        if (article.getStatus() != 1 || article.getAuditStatus() != 1) {
+        if ((article.getStatus() != 1 || article.getAuditStatus() != 1) && !user.getRole().equals(1)) {
             throw new BusinessException(404, "文章不存在");
         }
         
