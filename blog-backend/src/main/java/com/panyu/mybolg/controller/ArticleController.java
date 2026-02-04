@@ -75,7 +75,7 @@ public class ArticleController {
             @Parameter(description = "状态(0:草稿,1:已发布)") @RequestParam(required = false) Integer status) {
         // 从 ThreadLocal 获取当前用户ID
         Long userId = UserContext.getUserId();
-        
+
         Page<Article> result = articleService.listUserArticles(userId, pageNum, pageSize, title, status);
 
         Map<String, Object> data = new HashMap<>();
@@ -93,24 +93,25 @@ public class ArticleController {
         }
         // 判断是不是管理员
         User user = userService.getById(userId);
-        if(user == null){
+        if (user == null) {
             throw new BusinessException(404, "用户不存在");
         }
         Article article = articleService.getById(id);
         if (article == null) {
             throw new BusinessException(404, "文章不存在");
         }
-        
-        // 只有已发布且已审核通过的文章才能被普通用户访问
-        if ((article.getStatus() != 1 || article.getAuditStatus() != 1) && !user.getRole().equals(1)) {
-            throw new BusinessException(404, "文章不存在");
+        if (user.getRole() != 1) {
+            // 只有已发布且已审核通过的文章才能被普通用户访问
+            if (article.getStatus() != 1 || article.getAuditStatus() != 1) {
+                throw new BusinessException(404, "文章不存在");
+            }
         }
-        
+
         // 填充详细信息
         List<Article> articles = new ArrayList<>();
         articles.add(article);
         articleService.fillArticleDetails(articles);
-        
+
         return Result.success(article);
     }
 
@@ -165,22 +166,22 @@ public class ArticleController {
     public Result<Article> updateUserArticle(@RequestBody Article article) {
         // 从 ThreadLocal 获取当前用户ID
         Long userId = UserContext.getUserId();
-        
+
         // 验证文章是否属于当前用户
         Article existingArticle = articleService.getById(article.getId());
         if (existingArticle == null) {
             throw new BusinessException(404, "文章不存在");
         }
-        
+
         if (!existingArticle.getAuthorId().equals(userId)) {
             throw new BusinessException(403, "无权限操作此文章");
         }
-        
+
         // 如果文章状态是草稿，则审核状态应设为已审核（因为草稿不需要审核）
         if (article.getStatus() != null && article.getStatus() == 0) { // 草稿状态
             article.setAuditStatus(1); // 直接设置为已审核
         }
-        
+
         boolean success = articleService.updateWithTags(article, article.getTags());
         if (!success) {
             throw new BusinessException("更新失败");
@@ -228,13 +229,13 @@ public class ArticleController {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
         // 只查询已发布且待审核的文章（status = 1 且 auditStatus = 0）
         wrapper.eq(Article::getStatus, 1)      // 已发布的文章
-               .eq(Article::getAuditStatus, 0); // 待审核
+                .eq(Article::getAuditStatus, 0); // 待审核
         wrapper.orderByDesc(Article::getCreateTime);
-            
+
         Page<Article> result = articleService.page(page, wrapper);
         // 填充详细信息
         articleService.fillArticleDetails(result.getRecords());
-            
+
         Map<String, Object> data = new HashMap<>();
         data.put("list", result.getRecords());
         data.put("total", result.getTotal());
@@ -269,21 +270,21 @@ public class ArticleController {
     public Result<Void> resubmit(@Parameter(description = "文章ID") @PathVariable Long id) {
         // 从 ThreadLocal 获取当前用户ID
         Long userId = UserContext.getUserId();
-        
+
         Article article = articleService.getById(id);
         if (article == null) {
             throw new BusinessException(404, "文章不存在");
         }
-        
+
         if (!article.getAuthorId().equals(userId)) {
             throw new BusinessException(403, "无权限操作此文章");
         }
-        
+
         // 只有审核不通过的文章才能重新提交
         if (article.getAuditStatus() != 2) {
             throw new BusinessException(400, "只有审核不通过的文章才能重新提交");
         }
-        
+
         // 重新设置为待审核状态
         article.setAuditStatus(0); // 待审核
         article.setAuditReason(null); // 清空审核理由
@@ -291,10 +292,10 @@ public class ArticleController {
         if (!success) {
             throw new BusinessException("重新提交失败");
         }
-        
+
         // 发送邮件通知管理员
         articleService.notifyAdminNewArticle(article);
-        
+
         return Result.success();
     }
 
@@ -303,17 +304,17 @@ public class ArticleController {
     public Result<Article> getUserArticleDetail(@Parameter(description = "文章ID") @PathVariable Long id) {
         // 从 ThreadLocal 获取当前用户ID
         Long userId = UserContext.getUserId();
-        
+
         Article article = articleService.getDetailById(id);
         if (article == null) {
             throw new BusinessException(404, "文章不存在");
         }
-        
+
         // 验证文章是否属于当前用户
         if (!article.getAuthorId().equals(userId)) {
             throw new BusinessException(403, "无权限访问此文章");
         }
-        
+
         return Result.success(article);
     }
 }
