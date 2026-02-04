@@ -3,8 +3,11 @@ package com.panyu.mybolg.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.panyu.mybolg.common.Result;
 import com.panyu.mybolg.context.UserContext;
+import com.panyu.mybolg.entity.EmailMessage;
 import com.panyu.mybolg.entity.User;
+import com.panyu.mybolg.enums.EmailType;
 import com.panyu.mybolg.exception.UnauthorizedException;
+import com.panyu.mybolg.service.EmailProducer;
 import com.panyu.mybolg.service.UserService;
 import com.panyu.mybolg.util.CaptchaValidator;
 import com.panyu.mybolg.util.JwtUtil;
@@ -17,10 +20,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -39,10 +39,7 @@ public class UserController {
     private RedisTemplate<String, String> redisTemplate;
     
     @Resource
-    private JavaMailSender mailSender;
-    
-    @Value("${spring.mail.username}")
-    private String emailFrom;
+    private EmailProducer emailProducer;
 
     @Resource
     private JwtUtil jwtUtil;
@@ -259,8 +256,14 @@ public class UserController {
         redisTemplate.opsForValue().set(redisKey, captcha, 3, TimeUnit.MINUTES);
         
         try {
-            // 发送邮件
-            sendForgotPasswordEmail(email, captcha);
+            // 发送邮件到消息队列
+            EmailMessage emailMessage = new EmailMessage(
+                    email,
+                    "博客系统 - 找回密码验证码",
+                    "您的找回密码验证码是：" + captcha + "\n\n有效期：1分钟\n\n请不要将此验证码告诉他人。",
+                    EmailType.FORGOT_PASSWORD
+            );
+            emailProducer.sendEmailMessage(emailMessage);
             return Result.success("验证码已发送");
         } catch (Exception e) {
             throw new RuntimeException("发送验证码失败: " + e.getMessage());
@@ -313,22 +316,5 @@ public class UserController {
         redisTemplate.delete(redisKey);
         
         return Result.success("密码重置成功");
-    }
-    
-    /**
-     * 发送找回密码邮件
-     */
-    private void sendForgotPasswordEmail(String email, String captcha) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(emailFrom);
-        message.setTo(email);
-        message.setSubject("博客系统 - 找回密码验证码");
-        message.setText("您的找回密码验证码是：" + captcha + "\n\n有效期：1分钟\n\n请不要将此验证码告诉他人。");
-        
-        try {
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
-        }
     }
 }

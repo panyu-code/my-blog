@@ -24,12 +24,6 @@ springdoc:
   packages-to-scan: com.panyu.mybolg.controller
   default-flat-param-object: false
 
-
-# 天气API配置
-weather:
-  api:
-    key: 590f8257313043b0 # 从环境变量获取，如果没有则为空
-
 logging:
   level:
     root: info

@@ -1,14 +1,14 @@
 package com.panyu.mybolg.controller;
 
 import com.panyu.mybolg.common.Result;
+import com.panyu.mybolg.entity.EmailMessage;
+import com.panyu.mybolg.enums.EmailType;
+import com.panyu.mybolg.service.EmailProducer;
 import com.panyu.mybolg.util.CaptchaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,6 @@ import com.panyu.mybolg.util.ImageCaptchaUtil;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Tag(name = "验证码管理", description = "验证码相关接口")
 @RestController
@@ -33,10 +32,7 @@ public class CaptchaController {
     private RedisTemplate<String, String> redisTemplate;
     
     @Resource
-    private JavaMailSender mailSender;
-    
-    @Value("${spring.mail.username}")
-    private String emailFrom;
+    private EmailProducer emailProducer;
     
     @Operation(summary = "获取图形验证码", description = "获取账号登陆用的图形验证码")
     @GetMapping("/image")
@@ -72,20 +68,10 @@ public class CaptchaController {
     @GetMapping("/test")
     public Result<Map<String, String>> testEmail() {
         logger.info("测试邮件配置");
-        logger.info("emailFrom: {}", emailFrom);
-        logger.info("mailSender是否正常: {}", mailSender != null);
         
         Map<String, String> result = new HashMap<>();
-        if (emailFrom == null || emailFrom.isEmpty()) {
-            logger.error("邮箱配置为null");
-            result.put("status", "error");
-            result.put("message", "邮件配置未找到: emailFrom=" + emailFrom);
-            return Result.success(result);
-        }
-        
         result.put("status", "success");
-        result.put("emailFrom", emailFrom);
-        result.put("mailSender", mailSender != null ? "exists" : "null");
+        result.put("emailProducer", emailProducer != null ? "exists" : "null");
         logger.info("邮件配置正常");
         return Result.success(result);
     }
@@ -102,13 +88,7 @@ public class CaptchaController {
             return Result.error("邮箱不能为空");
         }
         
-        // 检查邮箱配置
-        if (emailFrom == null || emailFrom.isEmpty()) {
-            logger.error("邮箱配置错误: spring.mail.username 未配置");
-            return Result.error("邮箱配置错误");
-        }
-        
-        logger.info("发件人邮箱配置: {}", emailFrom);
+        logger.info("发件人邮箱配置检查通过");
         
         // 生成验证码
         String captcha = CaptchaUtil.generateCaptcha();
@@ -121,10 +101,16 @@ public class CaptchaController {
             redisTemplate.opsForValue().set(redisKey, captcha, 1, TimeUnit.MINUTES);
             logger.info("验证码存储到Redis成功");
             
-            // 发送邮件
-            logger.info("开始发送邮件到: {}", email);
-            sendEmail(email, captcha);
-            logger.info("邮件发送完成");
+            // 发送邮件到消息队列
+            logger.info("开始发送邮件消息到队列: {}", email);
+            EmailMessage emailMessage = new EmailMessage(
+                    email,
+                    "博客系统 - 验证码",
+                    "您的验证码是：" + captcha + "\n\n有效期：1分钟",
+                    EmailType.CAPTCHA
+            );
+            emailProducer.sendEmailMessage(emailMessage);
+            logger.info("邮件消息发送完成");
             
             Map<String, String> result = new HashMap<>();
             result.put("message", "验证码已发送");
@@ -132,27 +118,6 @@ public class CaptchaController {
         } catch (Exception e) {
             logger.error("发送验证码失败", e);
             return Result.error("发送验证码失败: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 发送邮件
-     */
-    private void sendEmail(String email, String captcha) {
-        logger.info("开始发送邮件: from={}, to={}", emailFrom, email);
-        
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(emailFrom);
-        message.setTo(email);
-        message.setSubject("博客系统 - 验证码");
-        message.setText("您的验证码是：" + captcha + "\n\n有效期：1分钟");
-        
-        try {
-            mailSender.send(message);
-            logger.info("邮件发送成功");
-        } catch (Exception e) {
-            logger.error("邮件发送失败: {}", e.getMessage(), e);
-            throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
         }
     }
 }

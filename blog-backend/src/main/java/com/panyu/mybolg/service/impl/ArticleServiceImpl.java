@@ -4,15 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.panyu.mybolg.entity.*;
+import com.panyu.mybolg.enums.EmailType;
 import com.panyu.mybolg.mapper.ArticleMapper;
 import com.panyu.mybolg.service.*;
 import com.panyu.mybolg.utils.RustFsUtil;
 import com.panyu.mybolg.vo.TagVO;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,10 +44,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private RustFsUtil rustFsUtil;
 
     @Resource
-    private JavaMailSender mailSender;
-
-    @Value("${spring.mail.username}")
-    private String emailFrom;
+    private EmailProducer emailProducer;
 
     @Override
     public Page<Article> listWithDetails(Integer pageNum, Integer pageSize, String title, Long categoryId, Integer status) {
@@ -529,7 +524,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                                 article.getAuditReason() : "内容不符合要求");
             }
 
-            sendEmail(author.getEmail(), subject, text);
+            // 发送邮件到消息队列
+            EmailMessage emailMessage = new EmailMessage(
+                    author.getEmail(),
+                    subject,
+                    text,
+                    EmailType.ARTICLE_AUDIT
+            );
+            emailProducer.sendEmailMessage(emailMessage);
         } catch (Exception e) {
             System.err.println("发送审核结果邮件失败: " + e.getMessage());
         }
@@ -559,22 +561,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                             "此为系统自动发送，请勿回复。",
                     article.getTitle(), authorName, article.getSummary());
 
-            sendEmail(admin.getEmail(), subject, text);
+            // 发送邮件到消息队列
+            EmailMessage emailMessage = new EmailMessage(
+                    admin.getEmail(),
+                    subject,
+                    text,
+                    EmailType.ARTICLE_NOTIFY
+            );
+            emailProducer.sendEmailMessage(emailMessage);
         } catch (Exception e) {
             System.err.println("发送新文章通知邮件失败: " + e.getMessage());
-        }
-    }
-
-    private void sendEmail(String to, String subject, String text) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(text);
-            message.setFrom(emailFrom);
-            mailSender.send(message);
-        } catch (Exception e) {
-            System.err.println("发送邮件失败: " + e.getMessage());
         }
     }
 }

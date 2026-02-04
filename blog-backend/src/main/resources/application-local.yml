@@ -1,7 +1,13 @@
-spring:
-  application:
-    name: blog-backend
+# 服务器配置 - 本地开发端口
+server:
+  port: 1717
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 128MB
+      max-request-size: 128MB
 
+spring:
   # MySQL 配置 - 本地开发环境
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -62,19 +68,28 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# 服务器配置 - 本地开发端口
-server:
-  port: 1717
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 128MB
-      max-request-size: 128MB
+# RocketMQ配置
+rocketmq:
+  name-server: 111.229.61.213:9876
+  producer:
+    group: email-producer-group
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
+  email:
+    topic: email-topic
+    consumer-group: email-consumer-group
 
 # JWT 配置（本地可覆盖，与 application.yml 保持一致即可）
 jwt:
   secret: "otSW5/ZEGa99ceGdTPkbuGhPDPrquWXGNLxmBZ6C3Lc="
   expiration: 604800000
+
+
+# 天气API配置
+weather:
+  api:
+    key: your_weather_api_key # 从环境变量获取，如果没有则为空
+
 
 # RustFS/MinIO 配置 - 本地开发环境
 rustfs:
