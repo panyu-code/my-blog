@@ -6,7 +6,6 @@ import com.panyu.mybolg.context.UserContext;
 import com.panyu.mybolg.entity.EmailMessage;
 import com.panyu.mybolg.entity.User;
 import com.panyu.mybolg.enums.EmailType;
-import com.panyu.mybolg.exception.UnauthorizedException;
 import com.panyu.mybolg.service.EmailProducer;
 import com.panyu.mybolg.service.UserService;
 import com.panyu.mybolg.util.CaptchaValidator;
@@ -259,8 +258,8 @@ public class UserController {
             // 发送邮件到消息队列
             EmailMessage emailMessage = new EmailMessage(
                     email,
-                    "博客系统 - 找回密码验证码",
-                    "您的找回密码验证码是：" + captcha + "\n\n有效期：1分钟\n\n请不要将此验证码告诉他人。",
+                    "MyBlog - 找回密码验证码",
+                    "您的找回密码验证码是：" + captcha + "\n\n有效期：3分钟\n\n请不要将此验证码告诉他人。",
                     EmailType.FORGOT_PASSWORD
             );
             emailProducer.sendEmailMessage(emailMessage);

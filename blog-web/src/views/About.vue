@@ -1,10 +1,10 @@
 <template>
   <div class="about-page">
     <el-card class="about-card">
-      <h1>关于博客</h1>
+      <h1>关于MyBlog</h1>
       <div class="content">
         <el-divider />
-        <h2>📝 博客简介</h2>
+        <h2>📝 MyBlog简介</h2>
         <p>这是一个基于 Vue 3 + Vite + Element Plus 构建的现代化博客系统。</p>
         
         <el-divider />
@@ -35,12 +35,12 @@
         <el-divider />
         <h2>📧 联系方式</h2>
         <p>如有任何问题或建议，欢迎联系我们：</p>
-        <p>📮 Email: blog@example.com</p>
-        <p>🌐 Website: https://example.com</p>
+        <p>📮 Email: panyu_lucky9527@163.com</p>
+        <p>🌐 Website: myblog.wiki</p>
 
         <el-divider />
         <div class="footer-info">
-          <p>© 2024 我的博客. All rights reserved.</p>
+          <p>© 2025 MyBlog. All rights reserved.</p>
           <p>Powered by Vue 3 + Vite</p>
         </div>
       </div>

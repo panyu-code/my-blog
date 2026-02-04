@@ -5,21 +5,21 @@ import com.panyu.mybolg.entity.EmailMessage;
 import com.panyu.mybolg.enums.EmailType;
 import com.panyu.mybolg.service.EmailProducer;
 import com.panyu.mybolg.util.CaptchaUtil;
+import com.panyu.mybolg.util.ImageCaptchaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import com.panyu.mybolg.util.ImageCaptchaUtil;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Tag(name = "验证码管理", description = "验证码相关接口")
 @RestController
@@ -97,16 +97,16 @@ public class CaptchaController {
         logger.info("生成的验证码: {}, Redis Key: {}", captcha, redisKey);
         
         try {
-            // 存储到Redis，有效期60秒
-            redisTemplate.opsForValue().set(redisKey, captcha, 1, TimeUnit.MINUTES);
+            // 存储到Redis，有效期3分钟
+            redisTemplate.opsForValue().set(redisKey, captcha, 3, TimeUnit.MINUTES);
             logger.info("验证码存储到Redis成功");
             
             // 发送邮件到消息队列
             logger.info("开始发送邮件消息到队列: {}", email);
             EmailMessage emailMessage = new EmailMessage(
                     email,
-                    "博客系统 - 验证码",
-                    "您的验证码是：" + captcha + "\n\n有效期：1分钟",
+                    "MyBlog - 验证码",
+                    "您的验证码是：" + captcha + "\n\n有效期：3分钟",
                     EmailType.CAPTCHA
             );
             emailProducer.sendEmailMessage(emailMessage);
