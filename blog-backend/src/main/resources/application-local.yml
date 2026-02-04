@@ -70,7 +70,7 @@ mybatis-plus:
 
 # RocketMQ配置
 rocketmq:
-  name-server: 111.229.61.213:9876
+  name-server: localhost:9876
   producer:
     group: email-producer-group
     send-message-timeout: 3000
