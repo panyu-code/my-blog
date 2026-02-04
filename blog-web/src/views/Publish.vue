@@ -203,6 +203,30 @@ const editorConfig = {
           insertFn(url, '', '')
         }
       }
+    },
+    // 新增：视频上传配置
+    uploadVideo: {
+      server: '/api/upload/file',   // 走后端通用文件上传接口 /upload/file
+      fieldName: 'file',
+      maxFileSize: 100 * 1024 * 1024, // 100MB，可按需改
+      allowedFileTypes: ['video/*'],
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      onSuccess(file, res) {
+        console.log('视频上传成功', res)
+      },
+      onFailed(file, res) {
+        ElMessage.error('视频上传失败')
+      },
+      customInsert(res, insertFn) {
+        const url = res.data?.url || res.url
+        if (url) {
+          insertFn(url)
+        } else {
+          ElMessage.error('未获取到视频地址')
+        }
+      }
     }
   }
 }
