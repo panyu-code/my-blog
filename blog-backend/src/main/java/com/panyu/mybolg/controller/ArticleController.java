@@ -88,20 +88,26 @@ public class ArticleController {
     @GetMapping("/{id}")
     public Result<Article> getById(@Parameter(description = "文章ID") @PathVariable Long id) {
         Long userId = UserContext.getUserId();
-        if (userId == null) {
-            throw new BusinessException(401, "用户未登录");
-        }
-        // 判断是不是管理员
-        User user = userService.getById(userId);
-        if (user == null) {
-            throw new BusinessException(404, "用户不存在");
-        }
         Article article = articleService.getById(id);
         if (article == null) {
             throw new BusinessException(404, "文章不存在");
         }
-        if (user.getRole() != 1) {
-            // 只有已发布且已审核通过的文章才能被普通用户访问
+        
+        // 如果用户已登录，检查权限
+        if (userId != null) {
+            User user = userService.getById(userId);
+            if (user == null) {
+                throw new BusinessException(404, "用户不存在");
+            }
+            
+            // 如果不是管理员，只能查看已发布且已审核的文章
+            if (user.getRole() != 1) {
+                if (article.getStatus() != 1 || article.getAuditStatus() != 1) {
+                    throw new BusinessException(404, "文章不存在");
+                }
+            }
+        } else {
+            // 未登录用户只能查看已发布且已审核的文章
             if (article.getStatus() != 1 || article.getAuditStatus() != 1) {
                 throw new BusinessException(404, "文章不存在");
             }
@@ -304,6 +310,10 @@ public class ArticleController {
     public Result<Article> getUserArticleDetail(@Parameter(description = "文章ID") @PathVariable Long id) {
         // 从 ThreadLocal 获取当前用户ID
         Long userId = UserContext.getUserId();
+
+        if (userId == null) {
+            throw new BusinessException(401, "用户未登录");
+        }
 
         Article article = articleService.getDetailById(id);
         if (article == null) {

@@ -36,7 +36,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         // 公开的文章列表和详情（只读）
                         "/article/list",
                         "/article/admin/list",
-                        "/article/{id}",
                         "/article/search",
                         "/article/*/view",
                         "/article/*/like",
