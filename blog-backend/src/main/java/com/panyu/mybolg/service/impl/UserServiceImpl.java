@@ -97,11 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (countObj != null) {
             errorCount = Integer.parseInt(countObj.toString());
         }
-        
-        if (errorCount >= 3) {
-            throw new RuntimeException("验证码输入错误次数过多，请重新获取");
-        }
-        
+
         if (!savedCaptcha.equals(emailCaptcha)) {
             // 增加错误计数
             errorCount++;

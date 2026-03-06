@@ -213,7 +213,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserArticles, deleteArticle } from '../api/article'
+import {getUserArticles, deleteArticle, resubmitArticle} from '../api/article'
 
 const router = useRouter()
 const loading = ref(false)
