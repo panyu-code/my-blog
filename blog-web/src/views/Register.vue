@@ -118,6 +118,7 @@ import { User, Lock, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 import request from '../api/request'
+import crypto from '../utils/crypto'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -304,7 +305,7 @@ const handleRegister = async () => {
       username: registerForm.username,
       email: registerForm.email,
       emailCaptcha: registerForm.emailCaptcha,
-      password: registerForm.password
+      password: crypto.encrypt(registerForm.password) // 加密密码后再发送
     })
 
     ElMessage.success('注册成功，请登录')

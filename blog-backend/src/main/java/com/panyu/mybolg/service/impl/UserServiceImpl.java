@@ -10,6 +10,7 @@ import com.panyu.mybolg.util.CaptchaUtil;
 import com.panyu.mybolg.util.IpUtil;
 import com.panyu.mybolg.util.JwtUtil;
 import com.panyu.mybolg.util.PasswordUtil;
+import com.panyu.mybolg.util.FrontendCryptoUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -55,8 +56,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户被禁用");
         }
         
-        // 使用MD5验证密码
-        if (!PasswordUtil.matches(password, loginUser.getPassword())) {
+        // 先解密前端传来的密码，再使用MD5验证
+        String decryptedPassword = FrontendCryptoUtil.decrypt(password);
+        if (!PasswordUtil.matches(decryptedPassword, loginUser.getPassword())) {
             // 增加错误计数
             incrementErrorCount(loginErrorKey, 30, TimeUnit.MINUTES);
             throw new RuntimeException("用户名或密码错误");
@@ -96,6 +98,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Object countObj = redisTemplate.opsForValue().get(errorCountKey);
         if (countObj != null) {
             errorCount = Integer.parseInt(countObj.toString());
+        }
+
+        if (errorCount >= 3) {
+            throw new RuntimeException("验证码输入错误次数过多，请重新获取");
         }
 
         if (!savedCaptcha.equals(emailCaptcha)) {
@@ -187,8 +193,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUsername(username);
         user.setEmail(email);
         
-        // 密码加密
-        String encryptedPassword = PasswordUtil.encryptPassword(password);
+        // 先解密前端传来的密码，再进行MD5加密
+        String decryptedPassword = FrontendCryptoUtil.decrypt(password);
+        String encryptedPassword = PasswordUtil.encryptPassword(decryptedPassword);
         user.setPassword(encryptedPassword);
         
         // 设置默认值

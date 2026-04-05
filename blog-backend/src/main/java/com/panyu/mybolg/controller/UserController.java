@@ -9,6 +9,7 @@ import com.panyu.mybolg.enums.EmailType;
 import com.panyu.mybolg.service.EmailProducer;
 import com.panyu.mybolg.service.UserService;
 import com.panyu.mybolg.util.CaptchaValidator;
+import com.panyu.mybolg.util.FrontendCryptoUtil;
 import com.panyu.mybolg.util.JwtUtil;
 import com.panyu.mybolg.util.PasswordUtil;
 import com.panyu.mybolg.vo.ForgotPasswordRequest;
@@ -213,18 +214,20 @@ public class UserController {
             throw new RuntimeException("用户不存在");
         }
         
-        // 验证原密码
-        if (!com.panyu.mybolg.util.PasswordUtil.matches(oldPassword, user.getPassword())) {
+        // 验证原密码 - 先解密前端传来的密码
+        String decryptedOldPassword = FrontendCryptoUtil.decrypt(oldPassword);
+        if (!com.panyu.mybolg.util.PasswordUtil.matches(decryptedOldPassword, user.getPassword())) {
             throw new RuntimeException("原密码错误");
         }
         
-        // 新密码不能与旧密码相同
-        if (com.panyu.mybolg.util.PasswordUtil.matches(newPassword, user.getPassword())) {
+        // 新密码不能与旧密码相同 - 先解密前端传来的密码
+        String decryptedNewPassword = FrontendCryptoUtil.decrypt(newPassword);
+        if (com.panyu.mybolg.util.PasswordUtil.matches(decryptedNewPassword, user.getPassword())) {
             throw new RuntimeException("新密码不能与旧密码相同");
         }
         
         // 加密新密码
-        String encryptedPassword = com.panyu.mybolg.util.PasswordUtil.encryptPassword(newPassword);
+        String encryptedPassword = com.panyu.mybolg.util.PasswordUtil.encryptPassword(decryptedNewPassword);
         user.setPassword(encryptedPassword);
         userService.updateById(user);
         
@@ -308,7 +311,9 @@ public class UserController {
             throw new RuntimeException("用户不存在");
         }
 
-        user.setPassword(PasswordUtil.encryptPassword(newPassword));
+        // 先解密前端传来的密码，再进行MD5加密
+        String decryptedPassword = FrontendCryptoUtil.decrypt(newPassword);
+        user.setPassword(PasswordUtil.encryptPassword(decryptedPassword));
         userService.updateById(user);
         
         // 删除验证码

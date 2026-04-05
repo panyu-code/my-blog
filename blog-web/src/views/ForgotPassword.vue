@@ -126,6 +126,7 @@ import { useRouter } from 'vue-router'
 import { Lock, Message, CircleCheckFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import request from '../api/request'
+import crypto from '../utils/crypto'
 
 const router = useRouter()
 const emailFormRef = ref(null)
@@ -205,7 +206,7 @@ const handleResetPassword = async () => {
     const res = await request.post('/user/forgot-password/reset', {
       email: forgotForm.email,
       code: forgotForm.code,
-      newPassword: forgotForm.newPassword
+      newPassword: crypto.encrypt(forgotForm.newPassword) // 加密新密码后再发送
     })
 
     if (res.code === 200) {

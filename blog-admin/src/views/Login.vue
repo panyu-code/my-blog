@@ -260,7 +260,7 @@ const handleLogin = async () => {
       // 账号登录（带图形验证码）
       loginData = {
         username: loginForm.username,
-        password: loginForm.password,
+        password: crypto.encrypt(loginForm.password), // 加密密码后再发送
         captchaId: accountCaptchaId.value,
         captcha: loginForm.captcha
       }

@@ -343,7 +343,7 @@ const handleLogin = async () => {
       
       loginData = {
         username: loginForm.username,
-        password: loginForm.password,
+        password: crypto.encrypt(loginForm.password), // 加密密码后再发送
         captchaId: accountCaptchaId.value,
         captcha: loginForm.captcha
       }

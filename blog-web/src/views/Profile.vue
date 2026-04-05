@@ -169,9 +169,9 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { User, Edit, Lock, Camera } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
-import { updateUserInfo } from '../api/user'
-import { changePassword } from '../api/user'
+import { updateUserInfo, changePassword } from '../api/user'
 import dayjs from 'dayjs'
+import crypto from '../utils/crypto'
 
 const userStore = useUserStore()
 const loading = ref(false)
@@ -319,8 +319,8 @@ const handleUpdatePassword = async () => {
     
     // 调用修改密码接口
     await changePassword({
-      oldPassword: passwordForm.oldPassword,
-      newPassword: passwordForm.newPassword
+      oldPassword: crypto.encrypt(passwordForm.oldPassword), // 加密原密码
+      newPassword: crypto.encrypt(passwordForm.newPassword) // 加密新密码
     })
     
     ElMessage.success('密码修改成功，请重新登录')
