@@ -22,7 +22,7 @@
           <router-link to="/publish" class="nav-item">发布文章</router-link>
           <router-link to="/my-articles" class="nav-item">我的文章</router-link>
           <router-link to="/search" class="nav-item">搜索</router-link>
-          <router-link to="/about" class="nav-item">关于</router-link>
+<!--          <router-link to="/about" class="nav-item">关于</router-link>-->
           <div class="weather-section">
             <el-popover
               placement="bottom"

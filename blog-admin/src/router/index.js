@@ -70,12 +70,12 @@ const routes = [
         component: () => import('../views/Uploads.vue'),
         meta: { title: '文件管理', icon: 'Picture', requiresAdmin: true }
       },
-      {
-        path: '/settings',
-        name: 'Settings',
-        component: () => import('../views/Settings.vue'),
-        meta: { title: '系统设置', icon: 'Setting', requiresAdmin: true }
-      },
+      // {
+      //   path: '/settings',
+      //   name: 'Settings',
+      //   component: () => import('../views/Settings.vue'),
+      //   meta: { title: '系统设置', icon: 'Setting', requiresAdmin: true }
+      // },
       {
         path: '/profile',
         name: 'Profile',
