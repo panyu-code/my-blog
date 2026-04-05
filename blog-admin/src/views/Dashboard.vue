@@ -2,7 +2,7 @@
   <div class="dashboard">
     <el-row :gutter="20">
       <el-col :span="6" v-for="item in statistics" :key="item.title">
-        <el-card class="stat-card">
+        <el-card class="stat-card" @click="handleCardClick(item)">
           <div class="stat-content">
             <div class="stat-icon" :style="{ background: item.color }">
               <el-icon :size="30">
@@ -107,10 +107,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { getDashboardStats, getRecentArticles, getRecentComments, getVisitTrend, getCategoryStats } from '../api/dashboard'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const loading = ref(false)
 const visitChartRef = ref(null)
 const categoryChartRef = ref(null)
@@ -122,19 +124,22 @@ const statistics = ref([
     title: '文章总数',
     value: 0,
     icon: 'Document',
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    path: '/articles'
   },
   {
     title: '评论总数',
     value: 0,
     icon: 'ChatDotRound',
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    path: '/comments'
   },
   {
     title: '用户总数',
     value: 0,
     icon: 'User',
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    path: '/users'
   },
   {
     title: '浏览总量',
@@ -300,6 +305,13 @@ const handleResize = () => {
   categoryChart?.resize()
 }
 
+// 卡片点击跳转
+const handleCardClick = (item) => {
+  if (item.path) {
+    router.push(item.path)
+  }
+}
+
 onMounted(async () => {
   await fetchStats()
   await fetchRecentArticles()
@@ -327,11 +339,12 @@ onUnmounted(() => {
 
 .stat-card {
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: all 0.3s;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stat-content {

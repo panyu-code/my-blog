@@ -125,6 +125,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import { changePassword } from '../api/user'
+import crypto from '../utils/crypto'
 
 const userStore = useUserStore()
 const loading = ref(false)
@@ -206,18 +208,44 @@ const handleUpdatePassword = async () => {
     await passwordFormRef.value.validate()
     passwordLoading.value = true
     
-    // TODO: 调用修改密码接口
-    // await updatePassword(passwordForm)
+    // 验证两次密码是否一致
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      ElMessage.error('两次密码不一致')
+      return
+    }
     
-    ElMessage.success('密码修改成功')
+    // 调用修改密码接口，加密密码
+    await changePassword({
+      oldPassword: crypto.encrypt(passwordForm.oldPassword),
+      newPassword: crypto.encrypt(passwordForm.newPassword)
+    })
+    
+    ElMessage.success('密码修改成功，请重新登录')
     
     // 清空表单
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
     passwordFormRef.value.resetFields()
+    
+    // 需要重新登录
+    setTimeout(() => {
+      userStore.logout()
+      window.location.href = '/login'
+    }, 1500)
   } catch (error) {
     console.error('修改密码失败:', error)
+    let errorMsg = '修改密码失败'
+    if (error && typeof error === 'object') {
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+    } else if (typeof error === 'string') {
+      errorMsg = error
+    }
+    ElMessage.error(errorMsg)
   } finally {
     passwordLoading.value = false
   }

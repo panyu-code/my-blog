@@ -79,3 +79,12 @@ export const updateUserStatus = (id, status) => {
     data: { status }
   })
 }
+
+// 修改密码
+export const changePassword = (data) => {
+  return request({
+    url: '/user/change-password',
+    method: 'post',
+    data
+  })
+}

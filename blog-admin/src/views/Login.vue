@@ -1,6 +1,53 @@
 <template>
   <div class="login-container">
+    <!-- 六边形网格背景 -->
+    <div class="hexagon-grid"></div>
+    <!-- 环形装饰 -->
+    <div class="ring-decoration"></div>
+    <div class="ring-decoration"></div>
+    
+    <!-- 代码雨 -->
+    <div class="code-rain">01001</div>
+    <div class="code-rain">11010</div>
+    <div class="code-rain">00110</div>
+    <div class="code-rain">10101</div>
+    <div class="code-rain">01101</div>
+    
+    <!-- 数据流 -->
+    <div class="data-stream"></div>
+    <div class="data-stream"></div>
+    <div class="data-stream"></div>
+    <div class="data-stream"></div>
+    
+    <!-- 光晕背景 -->
+    <div class="light-orb"></div>
+    <div class="light-orb-center"></div>
+    
+    <!-- 星空背景 -->
+    <div class="stars"></div>
+    
+    <!-- 流星效果 -->
+    <div class="meteor"></div>
+    <div class="meteor"></div>
+    <div class="meteor"></div>
+    
+    <!-- 浮动粒子 -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    
+    <!-- 几何装饰元素 -->
+    <div class="geometric-shape"></div>
+    <div class="geometric-shape"></div>
+    
     <div class="login-box">
+      <!-- 边框流动光效 -->
+      <div class="border-glow"></div>
+      
+      <!-- 顶部装饰线 -->
+      <div class="top-accent"></div>
+      
       <h2 class="login-title">博客后台管理系统</h2>
       <el-tabs v-model="loginType" class="login-tabs">
         <el-tab-pane label="账号登录" name="account">
@@ -349,23 +396,605 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2D384A 0%, #3a3a3a 50%, #4D5D72 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 动态光晕背景 */
+.login-container::before {
+  content: '';
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(255, 138, 128, 0.15) 0%, transparent 70%);
+  top: -300px;
+  right: -200px;
+  animation: pulse 8s ease-in-out infinite;
+  filter: blur(60px);
+}
+
+/* 第二个光晕 */
+.light-orb {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 209, 128, 0.12) 0%, transparent 70%);
+  bottom: -200px;
+  left: -150px;
+  animation: pulse 10s ease-in-out infinite reverse;
+  filter: blur(50px);
+}
+
+/* 第三个光晕 - 中心位置 */
+.light-orb-center {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 12s ease-in-out infinite;
+  filter: blur(40px);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* 星空背景点 */
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 160px 120px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 230px 80px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 300px 150px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 400px 60px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 500px 200px, rgba(255, 255, 255, 0.7), transparent);
+  background-size: 550px 250px;
+  animation: twinkle 4s ease-in-out infinite alternate;
+  opacity: 0.6;
+}
+
+/* 流星效果 */
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1), 0 0 0 8px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 1);
+  animation: meteor 3s linear infinite;
+  opacity: 0;
+}
+
+.meteor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 1), transparent);
+  right: 0;
+}
+
+.meteor:nth-child(1) {
+  top: 20%;
+  left: 80%;
+  animation-delay: 0s;
+  animation-duration: 3s;
+}
+
+.meteor:nth-child(2) {
+  top: 40%;
+  left: 90%;
+  animation-delay: 2s;
+  animation-duration: 4s;
+}
+
+.meteor:nth-child(3) {
+  top: 60%;
+  left: 85%;
+  animation-delay: 4s;
+  animation-duration: 3.5s;
+}
+
+@keyframes meteor {
+  0% {
+    transform: rotate(-45deg) translateX(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-45deg) translateX(-1000px);
+    opacity: 0;
+  }
+}
+
+/* 几何图形装饰 */
+.login-container::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  top: -200px;
+  right: -200px;
+  animation: rotate 30s linear infinite;
+}
+
+/* 额外的装饰圆圈 */
+.geometric-shape {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  animation: rotate 25s linear infinite reverse;
+}
+
+.geometric-shape:nth-child(1) {
+  width: 400px;
+  height: 400px;
+  bottom: -150px;
+  left: -150px;
+  animation-duration: 35s;
+}
+
+.geometric-shape:nth-child(2) {
+  width: 250px;
+  height: 250px;
+  top: 50%;
+  left: 10%;
+  border-color: rgba(255, 255, 255, 0.05);
+  animation-duration: 20s;
+}
+
+/* 浮动粒子 */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 138, 128, 0.6);
+  border-radius: 50%;
+  animation: float-particle 15s infinite;
+  box-shadow: 0 0 10px rgba(255, 138, 128, 0.8);
+}
+
+.particle:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+  top: 60%;
+  left: 80%;
+  animation-delay: 3s;
+  background: rgba(255, 209, 128, 0.6);
+  box-shadow: 0 0 10px rgba(255, 209, 128, 0.8);
+}
+
+.particle:nth-child(3) {
+  top: 80%;
+  left: 30%;
+  animation-delay: 6s;
+}
+
+.particle:nth-child(4) {
+  top: 30%;
+  left: 70%;
+  animation-delay: 9s;
+  background: rgba(255, 209, 128, 0.6);
+  box-shadow: 0 0 10px rgba(255, 209, 128, 0.8);
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(100px, -100px) scale(1.5);
+  }
+}
+
+/* 六边形网格背景 */
+.hexagon-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(30deg, rgba(255, 255, 255, 0.03) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.03) 87.5%, rgba(255, 255, 255, 0.03)),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.03) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.03) 87.5%, rgba(255, 255, 255, 0.03)),
+    linear-gradient(30deg, rgba(255, 255, 255, 0.03) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.03) 87.5%, rgba(255, 255, 255, 0.03)),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.03) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.03) 87.5%, rgba(255, 255, 255, 0.03)),
+    linear-gradient(60deg, rgba(255, 255, 255, 0.02) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.02) 75%, rgba(255, 255, 255, 0.02)),
+    linear-gradient(60deg, rgba(255, 255, 255, 0.02) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.02) 75%, rgba(255, 255, 255, 0.02));
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+  opacity: 0.3;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% {
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+  }
+  100% {
+    background-position: 80px 140px, 80px 140px, 120px 210px, 120px 210px, 80px 140px, 120px 210px;
+  }
+}
+
+@keyframes scan {
+  0% {
+    top: 0%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+/* 数据流效果 */
+.data-stream {
+  position: absolute;
+  width: 1px;
+  height: 100px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 209, 128, 0.6), transparent);
+  animation: dataFlow 5s linear infinite;
+  opacity: 0.4;
+}
+
+.data-stream:nth-child(1) {
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.data-stream:nth-child(2) {
+  left: 35%;
+  animation-delay: 1.5s;
+}
+
+.data-stream:nth-child(3) {
+  left: 55%;
+  animation-delay: 3s;
+}
+
+.data-stream:nth-child(4) {
+  left: 75%;
+  animation-delay: 4.5s;
+}
+
+@keyframes dataFlow {
+  0% {
+    top: -100px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes lineExpand {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scaleX(0.5);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes badgeFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+/* 环形进度装饰 */
+.ring-decoration {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 3px solid rgba(255, 138, 128, 0.2);
+  border-top-color: rgba(255, 138, 128, 0.6);
+  border-radius: 50%;
+  animation: ringRotate 10s linear infinite;
+}
+
+.ring-decoration::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border: 2px solid rgba(255, 209, 128, 0.2);
+  border-bottom-color: rgba(255, 209, 128, 0.6);
+  border-radius: 50%;
+  animation: ringRotate 7s linear infinite reverse;
+}
+
+.ring-decoration:nth-child(1) {
+  top: 15%;
+  right: 12%;
+}
+
+.ring-decoration:nth-child(2) {
+  bottom: 18%;
+  left: 8%;
+  animation-duration: 12s;
+}
+
+@keyframes ringRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 代码雨效果 */
+.code-rain {
+  position: absolute;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: rgba(255, 138, 128, 0.3);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 8px;
+  animation: codeFall 8s linear infinite;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.code-rain:nth-child(1) {
+  left: 5%;
+  animation-delay: 0s;
+}
+
+.code-rain:nth-child(2) {
+  left: 25%;
+  animation-delay: 2s;
+}
+
+.code-rain:nth-child(3) {
+  left: 45%;
+  animation-delay: 4s;
+}
+
+.code-rain:nth-child(4) {
+  left: 65%;
+  animation-delay: 6s;
+}
+
+.code-rain:nth-child(5) {
+  left: 85%;
+  animation-delay: 1s;
+}
+
+@keyframes codeFall {
+  0% {
+    top: -100%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .login-box {
-  width: 400px;
-  padding: 40px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 440px;
+  padding: 50px;
+  background: rgba(35, 35, 35, 0.93);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 
+    0 25px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* 卡片光泽扫过效果 */
+.login-box::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  animation: shine 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* 卡片边框流动光效 */
+.border-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ff8a80, #ffd180, #ff8a80, #ffd180);
+  background-size: 400% 400%;
+  border-radius: 22px;
+  z-index: -1;
+  animation: borderFlow 8s ease infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+  filter: blur(8px);
+}
+
+.login-box:hover .border-glow {
+  opacity: 0.6;
+}
+
+@keyframes borderFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.login-box:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 30px 90px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 40px rgba(255, 138, 128, 0.1);
+}
+
+/* 卡片顶部装饰线 */
+.top-accent {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff8a80, #ffd180, transparent);
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 0 10px rgba(255, 138, 128, 0.5);
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 138, 128, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 138, 128, 0.6), 0 0 30px rgba(255, 209, 128, 0.4);
+  }
 }
 
 .login-title {
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 24px;
-  color: #333;
-  font-weight: 600;
+  margin-bottom: 40px;
+  font-size: 28px;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  position: relative;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+  animation: titleFloat 3s ease-in-out infinite;
+}
+
+@keyframes titleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.login-title::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff8a80, #ffd180, transparent);
+  box-shadow: 0 0 10px rgba(255, 138, 128, 0.5);
+  animation: lineExpand 3s ease-in-out infinite;
+}
+
+@keyframes lineExpand {
+  0%, 100% {
+    width: 80px;
+    opacity: 0.8;
+  }
+  50% {
+    width: 100px;
+    opacity: 1;
+  }
 }
 
 .login-form {
