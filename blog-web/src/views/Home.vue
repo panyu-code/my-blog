@@ -48,21 +48,27 @@
     <!-- 文章列表 -->
     <el-row :gutter="20">
       <el-col :xs="24" :sm="24" :md="16" :lg="18">
-        <div class="article-list">
-          <el-skeleton v-if="articleStore.loading" :rows="5" animated />
-          
-          <div v-else-if="!articleStore.articleList || articleStore.articleList.length === 0" class="empty-state">
-            <el-empty description="暂无文章" />
-          </div>
+        <el-scrollbar
+          ref="scrollbarRef"
+          class="article-list-scrollbar"
+          height="calc(100vh - 200px)"
+          @scroll="handleScroll"
+        >
+          <div class="article-list">
+            <el-skeleton v-if="isFirstLoading" :rows="5" animated />
+            
+            <div v-else-if="!articleStore.articleList || articleStore.articleList.length === 0" class="empty-state">
+              <el-empty description="暂无文章" />
+            </div>
 
-          <div v-else>
-            <el-card
-              v-for="article in articleStore.articleList"
-              :key="article.id"
-              class="article-card"
-              shadow="hover"
-              @click="toArticleDetail(article.id)"
-            >
+            <div v-else>
+              <el-card
+                v-for="article in articleStore.articleList"
+                :key="article.id"
+                class="article-card"
+                shadow="hover"
+                @click="toArticleDetail(article.id)"
+              >
               <div class="article-header">
                 <h2 class="article-title">{{ article.title }}</h2>
                 <div class="article-meta">
@@ -86,7 +92,7 @@
               </div>
 
               <div class="article-cover" v-if="article.cover">
-                <el-image :src="article.cover" fit="cover" lazy />
+                <el-image :src="article.cover+ '?x-oss-process=style/thumbnail'" fit="cover"   loading="lazy" />
               </div>
 
               <div class="article-summary">
@@ -128,20 +134,21 @@
               </div>
             </el-card>
 
-            <!-- 分页 -->
-            <div class="pagination">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 30, 50]"
-                :total="articleStore.total"
-                layout="total, sizes, prev, pager, next, jumper"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
+            <!-- 加载更多提示 -->
+            <div class="load-more-container" v-if="hasMore">
+              <div v-if="loadingMore" class="loading-more">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                <span>加载中...</span>
+              </div>
+            </div>
+
+            <!-- 没有更多数据 -->
+            <div v-else-if="!hasMore && articleStore.articleList.length > 0" class="no-more">
+              <span>没有更多文章了</span>
             </div>
           </div>
         </div>
+      </el-scrollbar>
       </el-col>
 
       <!-- 侧边栏 -->
@@ -171,10 +178,17 @@
       </el-col>
     </el-row>
   </div>
+  <div
+      v-show="showBackTop"
+      class="back-top"
+      @click="scrollToTop"
+  >
+    <el-icon><ArrowUp /></el-icon>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import {ref, onMounted, computed, nextTick} from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Calendar,
@@ -184,11 +198,13 @@ import {
   ArrowRight,
   TrendCharts,
   Folder,
-  PriceTag
+  PriceTag,
+  Loading,
+  ArrowDown, ArrowUp
 } from '@element-plus/icons-vue'
 import { useArticleStore } from '../stores/article'
 import { useUserStore } from '../stores/user'
-import { getCategoryList, getTagList } from '../api/article'
+import { getCategoryList, getTagList,getArticleList } from '../api/article'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 
@@ -196,12 +212,13 @@ const router = useRouter()
 const articleStore = useArticleStore()
 const userStore = useUserStore()
 
-const currentPage = ref(1)
 const pageSize = ref(10)
 const tags = ref([])
 const categories = ref([])
 const hotArticles = ref([])
 const selectedCategory = ref(null)
+const loadingMore = ref(false)
+const hasMore = ref(true)
 
 // 根据选中的分类过滤标签
 const filteredTags = computed(() => {
@@ -229,24 +246,47 @@ const toArticleDetail = (id) => {
   router.push(`/article/${id}`)
 }
 
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  fetchArticles()
+// 加载更多文章
+const loadMore = async () => {
+  if (loadingMore.value || !hasMore.value) return
+
+  const wrap = scrollbarRef.value.wrapRef
+  const prevScrollTop = wrap.scrollTop
+
+  loadingMore.value = true
+
+  try {
+    const nextPage = Math.floor(articleStore.articleList.length / pageSize.value) + 1
+
+    await articleStore.getArticleListAction({
+      pageNum: nextPage,
+      pageSize: pageSize.value
+    }, true)
+
+    // ✅ 恢复滚动位置（关键）
+    await nextTick(() => {
+      wrap.scrollTop = prevScrollTop
+    })
+
+    hasMore.value = articleStore.articleList.length < articleStore.total
+  } finally {
+    loadingMore.value = false
+  }
 }
 
-const handleCurrentChange = (val) => {
-  currentPage.value = val
-  fetchArticles()
-}
+// el-scrollbar 滚动事件处理
+const scrollbarRef = ref(null)
+
+const isFirstLoading = ref(true)
 
 const fetchArticles = async () => {
   try {
     await articleStore.getArticleListAction({
-      pageNum: currentPage.value,
+      pageNum: 1,
       pageSize: pageSize.value
     })
-  } catch (error) {
-    console.error('获取文章列表失败:', error)
+  } finally {
+    isFirstLoading.value = false
   }
 }
 
@@ -270,23 +310,55 @@ const fetchTags = async () => {
 
 const fetchHotArticles = async () => {
   try {
-    const res = await articleStore.getArticleListAction({
-      pageNum: 1,
-      pageSize: 5,
-      sort: 'viewCount'
-    })
-    hotArticles.value = res.data.list
+    // // 直接调用API，不使用store方法，避免影响主列表
+    // const res = await getArticleList({
+    //   pageNum: 1,
+    //   pageSize: 5,
+    //   sort: 'viewCount'
+    // })
+    hotArticles.value = [...articleStore.articleList]
+        .sort((a, b) => b.viewCount - a.viewCount)
+        .slice(0, 5)
   } catch (error) {
     console.error('获取热门文章失败:', error)
   }
 }
 
-onMounted(() => {
-  fetchArticles()
+onMounted(async () => {
+  // ① 先加载主内容（首屏）
+  await fetchArticles()
+  // ② 再异步加载其他（不阻塞）
   fetchCategories()
   fetchTags()
   fetchHotArticles()
 })
+
+const showBackTop = ref(false)
+
+// 监听滚动（你原来的 handleScroll 里加这个）
+const handleScroll = ({ scrollTop }) => {
+  const wrap = scrollbarRef.value.wrapRef
+  const scrollHeight = wrap.scrollHeight
+  const clientHeight = wrap.clientHeight
+
+  // 👉 控制按钮显示
+  showBackTop.value = scrollTop > 400
+
+  // 👉 原来的加载逻辑
+  if (scrollTop + clientHeight >= scrollHeight - 200 && hasMore.value && !loadingMore.value) {
+    loadMore()
+  }
+}
+
+// 回到顶部
+const scrollToTop = () => {
+  const wrap = scrollbarRef.value.wrapRef
+
+  wrap.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
 </script>
 
 <style scoped>
@@ -427,9 +499,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 0 10px;
+}
+
+.article-list-scrollbar {
+  padding-right: 10px;
+}
+
+.article-list-scrollbar :deep(.el-scrollbar__wrap) {
+  overflow-x: hidden;
 }
 
 .article-card {
+  margin-bottom: 10px;
   cursor: pointer;
   transition: transform 0.3s;
 }
@@ -532,6 +614,32 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* 加载更多样式 */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.loading-more .el-icon {
+  font-size: 20px;
+}
+
+.no-more {
+  text-align: center;
+  padding: 30px 0;
+  color: #909399;
+  font-size: 14px;
 }
 
 .pagination {
@@ -661,4 +769,41 @@ onMounted(() => {
     position: static;
   }
 }
+
+.article-list-scrollbar :deep(.el-scrollbar__thumb) {
+  background: rgba(224,105,101);
+  transition: all 0.3s;
+}
+
+.article-list-scrollbar:hover :deep(.el-scrollbar__thumb) {
+  background: rgb(228, 22, 15);
+}
+
+.back-top {
+  position: fixed;
+  right: 40px;
+  bottom: 60px;
+  width: 44px;
+  height: 44px;
+  background: #409eff;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 999;
+}
+
+.back-top:hover {
+  transform: translateY(-4px);
+  background: #66b1ff;
+}
+
+.back-top .el-icon {
+  font-size: 20px;
+}
+
 </style>

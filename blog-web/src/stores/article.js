@@ -11,11 +11,18 @@ export const useArticleStore = defineStore('article', () => {
   const tags = ref([])
 
   // 获取文章列表
-  const getArticleListAction = async (params) => {
+  const getArticleListAction = async (params, append = false) => {
     loading.value = true
     try {
       const res = await getArticleList(params)
-      articleList.value = res.data.list
+      if (append && params.pageNum > 1) {
+        // 追加模式：创建新数组但保持数据连续性
+        const newList = res.data.list || []
+        articleList.value = articleList.value.concat(newList)
+      } else {
+        // 替换模式：清空后设置新数据
+        articleList.value = res.data.list || []
+      }
       total.value = res.data.total
       return res
     } catch (error) {
