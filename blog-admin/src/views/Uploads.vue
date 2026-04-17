@@ -41,7 +41,7 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">
+            <el-button type="primary" @click="handleSearch(1)">
               <el-icon style="margin-right: 4px;"><Search /></el-icon>
               搜索
             </el-button>
@@ -184,7 +184,8 @@ const pagination = reactive({
 
 const tableData = ref([])
 
-const fetchData = async () => {
+const fetchData = async (page) => {
+  if (page) pagination.page = page
   loading.value = true
   try {
     const res = await getUploadList({
@@ -204,14 +205,13 @@ const fetchData = async () => {
   }
 }
 
-const handleSearch = () => {
-  pagination.page = 1
-  fetchData()
+const handleSearch = (page) => {
+  fetchData(page)
 }
 
 const handleReset = () => {
   searchForm.fileType = null
-  handleSearch()
+  handleSearch(1)
 }
 
 const handleUploadSuccess = (data) => {

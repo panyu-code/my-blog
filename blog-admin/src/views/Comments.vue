@@ -24,7 +24,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" @click="handleSearch(1)">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -127,7 +127,8 @@ const formatDate = (dateStr) => {
   return dateStr.replace('T', ' ').substring(0, 19)
 }
 
-const fetchData = async () => {
+const fetchData = async (page) => {
+  if(page) pagination.page = page
   loading.value = true
   try {
     const res = await getCommentList({
@@ -144,14 +145,13 @@ const fetchData = async () => {
   }
 }
 
-const handleSearch = () => {
-  pagination.page = 1
-  fetchData()
+const handleSearch = (page) => {
+  fetchData(page)
 }
 
 const handleReset = () => {
   searchForm.status = null
-  handleSearch()
+  handleSearch(1)
 }
 
 const handleApprove = async (row) => {

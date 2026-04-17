@@ -38,7 +38,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" @click="handleSearch(1)">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -185,7 +185,8 @@ const fetchCategories = async () => {
   }
 }
 
-const fetchData = async () => {
+const fetchData = async (page) => {
+  if(page) pagination.page = page
   loading.value = true
   try {
     const res = await request({
@@ -207,16 +208,15 @@ const fetchData = async () => {
   }
 }
 
-const handleSearch = () => {
-  pagination.page = 1
-  fetchData()
+const handleSearch = (page) => {
+  fetchData(page)
 }
 
 const handleReset = () => {
   searchForm.title = ''
   searchForm.categoryId = null
   searchForm.status = null
-  handleSearch()
+  handleSearch(1)
 }
 
 const handleEdit = (row) => {

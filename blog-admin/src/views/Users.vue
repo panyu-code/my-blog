@@ -28,7 +28,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" @click="handleSearch(1)">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -167,7 +167,8 @@ const dialogTitle = computed(() => {
   return currentRow.value ? '编辑用户' : '新增用户'
 })
 
-const fetchData = async () => {
+const fetchData = async (page) => {
+  if (page) pagination.page = page
   loading.value = true
   try {
     const res = await getUserList({
@@ -184,15 +185,14 @@ const fetchData = async () => {
   }
 }
 
-const handleSearch = () => {
-  pagination.page = 1
-  fetchData()
+const handleSearch = (page) => {
+  fetchData(page)
 }
 
 const handleReset = () => {
   searchForm.username = ''
   searchForm.role = null
-  handleSearch()
+  handleSearch(1)
 }
 
 const handleEdit = (row) => {
