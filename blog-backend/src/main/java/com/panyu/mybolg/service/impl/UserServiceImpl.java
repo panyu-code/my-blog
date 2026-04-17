@@ -83,34 +83,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public Map<String, Object> loginByEmail(String email, String emailCaptcha, HttpServletRequest request) {
-        // 从Redis中获取验证码
-        String redisKey = CaptchaUtil.getCaptchaRedisKey(email);
-        String savedCaptcha = redisTemplate.opsForValue().get(redisKey);
-        
-        // 验证验证码
-        if (savedCaptcha == null) {
-            throw new RuntimeException("验证码已过期，请重新获取");
-        }
-        
-        // 检查验证码错误次数
-        String errorCountKey = "email_captcha_error_" + email;
-        Integer errorCount = 0;
-        Object countObj = redisTemplate.opsForValue().get(errorCountKey);
-        if (countObj != null) {
-            errorCount = Integer.parseInt(countObj.toString());
-        }
-
-        if (errorCount >= 3) {
-            throw new RuntimeException("验证码输入错误次数过多，请重新获取");
-        }
-
-        if (!savedCaptcha.equals(emailCaptcha)) {
-            // 增加错误计数
-            errorCount++;
-            redisTemplate.opsForValue().set(errorCountKey, errorCount.toString(), 1, TimeUnit.MINUTES);
-            throw new RuntimeException("验证码错误，还有" + (3 - errorCount) + "次尝试机会");
-        }
-        
         // 根据邮箱查询用户
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getEmail, email);
@@ -129,11 +101,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginUser.setLastLoginTime(LocalDateTime.now());
         loginUser.setLastLoginIp(IpUtil.getClientIp(request));
         updateById(loginUser);
-        
-        // 删除已使用的验证码和错误计数
-        redisTemplate.delete(redisKey);
-        redisTemplate.delete(errorCountKey);
-        
+
         // 生成 JWT
         String token = jwtUtil.generateToken(loginUser.getId());
         Map<String, Object> result = new HashMap<>();
